@@ -11,6 +11,9 @@ UserId = str
 ObservationValue = int
 
 
+
+
+
 class Listing:
 
     def __init__(self, symbol: Symbol, product: Product, denomination: Product):
