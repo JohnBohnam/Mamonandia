@@ -28,20 +28,27 @@ class Trader:
                 temp_buy.sort()
                 lowestAskPrice = temp[0]  # state.order_depths[product].keys().sort()[0]
                 highestBidPrice = temp_buy[-1]
-                print(f"{lowestAskPrice}; {highestBidPrice};", end="")
+                mean=(lowestAskPrice+highestBidPrice)/2
+                if product == "AMETHYSTS":
+                    bid_price=9999
+                    ask_price=10001
+                #else:
+                #    bid_price =4997
+                #    ask_price = 5003
+                #print(f"{lowestAskPrice}; {highestBidPrice};", end="")
 
-                mean_price = (lowestAskPrice + highestBidPrice) / 2
-                if len(order_depth.sell_orders) != 0:
-                    best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]  # posortowane
-                    if int(best_ask) < mean_price * 0.95:
-                        print("BUY", str(-best_ask_amount) + "x", best_ask)
-                        orders.append(Order(product, best_ask, -best_ask_amount))
+               # mean_price = (lowestAskPrice + highestBidPrice) / 2
+                    if len(order_depth.sell_orders) != 0:
+                        best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]  # posortowane
+                        if int(best_ask) < bid_price:
+                            print("BUY", str(-best_ask_amount) + "x", best_ask)
+                            orders.append(Order(product, ask_price, -best_ask_amount))
 
-                if len(order_depth.buy_orders) != 0:
-                    best_bid, best_bid_amount = list(order_depth.buy_orders.items())[0]
-                    if int(best_bid) > mean_price * 1.05:
-                        print("SELL", str(best_bid_amount) + "x", best_bid)
-                        orders.append(Order(product, best_bid, -best_bid_amount))
+                    if len(order_depth.buy_orders) != 0:
+                        best_bid, best_bid_amount = list(order_depth.buy_orders.items())[0]
+                        if int(best_bid) > ask_price:
+                            print("SELL", str(best_bid_amount) + "x", best_bid)
+                            orders.append(Order(product, bid_price, -best_bid_amount))
 
                 result[product] = orders
 
