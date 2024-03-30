@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load the Excel file into a pandas DataFrame
-df = pd.read_csv('simple_data.csv')
+df = pd.read_csv('./data/simple_data.csv')
 
 amethyst_df = df[df['product'] == 'AMETHYSTS']
 starfruit_df = df[df['product'] == 'STARFRUIT']
