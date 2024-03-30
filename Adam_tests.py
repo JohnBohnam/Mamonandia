@@ -56,8 +56,8 @@ class Trader:
                             if pos < 20:
                                 sell_amount = 20 + pos
                                 orders.append(Order(product, amethyst_sell, -sell_amount))
-                    elif pos > 0:
-                        orders.append(Order(product, amethyst_price, -pos))
+                        elif pos > 0:
+                            orders.append(Order(product, amethyst_price, -pos))
 
                 result[product] = orders
 
