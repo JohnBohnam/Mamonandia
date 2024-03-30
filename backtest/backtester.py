@@ -1,5 +1,6 @@
 # from one_day_Trader import Trader
-from basic_trader import Trader
+# from basic_trader import Trader
+from Strategy2023.trader import Trader
 from datamodel import *
 from typing import Any  #, Callable
 import numpy as np
@@ -16,6 +17,20 @@ TIME_DELTA = 100
 # Please put all! the price and log files into
 # the same directory or adjust the code accordingly
 TRAINING_DATA_PREFIX = "./training"
+
+current_limits = {
+    'PEARLS': 20,
+    'BANANAS': 20,
+    'COCONUTS': 600,
+    'PINA_COLADAS': 300,
+    'DIVING_GEAR': 50,
+    'BERRIES': 250,
+    'BAGUETTE': 150,
+    'DIP': 300,
+    'UKULELE': 70,
+    'PICNIC_BASKET': 70,
+}
+
 
 ALL_SYMBOLS = [
     'PEARLS',
@@ -131,18 +146,7 @@ def process_trades(df_trades, states: dict[int, TradingState], time_limit, names
         states[time].market_trades[symbol].append(t)
     return states
        
-current_limits = {
-    'PEARLS': 20,
-    'BANANAS': 20,
-    'COCONUTS': 600,
-    'PINA_COLADAS': 300,
-    'DIVING_GEAR': 50,
-    'BERRIES': 250,
-    'BAGUETTE': 150,
-    'DIP': 300,
-    'UKULELE': 70,
-    'PICNIC_BASKET': 70,
-}
+
 
 def calc_mid(states: dict[int, TradingState], round: int, time: int, max_time: int) -> dict[str, float]:
     medians_by_symbol = {}
@@ -518,8 +522,8 @@ if __name__ == "__main__":
     max_time =9 #int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
     if max_time < 10:
         max_time *= 100000
-    round = 1#int(input("Input a round (blank for 4): ") or 4)
-    day = 0#int(input("Input a day (blank for random): ") or random.randint(1, 3))
+    round = 4#int(input("Input a round (blank for 4): ") or 4)
+    day = 3#int(input("Input a day (blank for random): ") or random.randint(1, 3))
     names_in ="y"# input("With bot names (default: y) (y/n): ")
     names = True
     if 'n' in names_in:
@@ -529,5 +533,4 @@ if __name__ == "__main__":
     if 'y' in halfway_in:
         halfway = True
     print(f"Running simulation on round {round} day {day} for time {max_time}")
-    print("Remember to change the trader import")
     simulate_alternative(round, day, trader, max_time, names, halfway, False)

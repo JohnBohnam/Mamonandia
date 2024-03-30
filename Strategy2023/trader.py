@@ -1,4 +1,6 @@
 from typing import Dict, List
+
+from backtest.dontlooseshells_algo import Logger
 from datamodel import OrderDepth, TradingState, Order
 import collections
 from collections import defaultdict
@@ -16,6 +18,7 @@ def def_value():
 INF = int(1e9)
 
 class Trader:
+    logger = Logger(local=True)
 
     position = copy.deepcopy(empty_dict)
     POSITION_LIMIT = {'PEARLS' : 20, 'BANANAS' : 20, 'COCONUTS' : 600, 'PINA_COLADAS' : 300, 'BERRIES' : 250, 'DIVING_GEAR' : 50, 'DIP' : 300, 'BAGUETTE': 150, 'UKULELE' : 70, 'PICNIC_BASKET' : 70}
@@ -553,17 +556,17 @@ class Trader:
 
         totpnl = 0
 
-        for product in state.order_depths.keys():
-            settled_pnl = 0
-            best_sell = min(state.order_depths[product].sell_orders.keys())
-            best_buy = max(state.order_depths[product].buy_orders.keys())
-
-            if self.position[product] < 0:
-                settled_pnl += self.position[product] * best_buy
-            else:
-                settled_pnl += self.position[product] * best_sell
-            totpnl += settled_pnl + self.cpnl[product]
-            print(f"For product {product}, {settled_pnl + self.cpnl[product]}, {(settled_pnl+self.cpnl[product])/(self.volume_traded[product]+1e-20)}")
+        # for product in state.order_depths.keys():
+        #     settled_pnl = 0
+        #     best_sell = min(state.order_depths[product].sell_orders.keys())
+        #     best_buy = max(state.order_depths[product].buy_orders.keys())
+        #
+        #     if self.position[product] < 0:
+        #         settled_pnl += self.position[product] * best_buy
+        #     else:
+        #         settled_pnl += self.position[product] * best_sell
+        #     totpnl += settled_pnl + self.cpnl[product]
+        #     print(f"For product {product}, {settled_pnl + self.cpnl[product]}, {(settled_pnl+self.cpnl[product])/(self.volume_traded[product]+1e-20)}")
 
         for person in self.person_position.keys():
             for val in self.person_position[person].keys():
@@ -578,5 +581,6 @@ class Trader:
         print(f"Timestamp {timestamp}, Total PNL ended up being {totpnl}")
         # print(f'Will trade {result}')
         print("End transmission")
+        self.logger.flush(state, result)
                 
         return result
