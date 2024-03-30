@@ -32,38 +32,32 @@ class Trader:
                 # highestBidPrice = temp_buy[-1]
 
                 if product == "AMETHYSTS":
-                    amethyst_price=10000
-                    amethyst_buy=10001
+                    amethyst_price = 10000
+                    amethyst_buy = 10001
                     amethyst_sell = 9999
                     pos = 0
-
-
+                    if product in state.position:
+                        pos = state.position[product]
 
                     if len(order_depth.sell_orders) != 0:
                         best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]  # posortowane
                         if int(best_ask) < amethyst_price:
-                            #print("BUY", str(-best_ask_amount) + "x", best_ask)
-                            if pos>-20 :
-                                buy_amount=20-pos
+                            # print("BUY", str(-best_ask_amount) + "x", best_ask)
+                            if pos > -20:
+                                buy_amount = 20 - pos
                                 orders.append(Order(product, amethyst_buy, buy_amount))
-                        elif pos<0 :
+                        elif pos < 0:
                             orders.append(Order(product, amethyst_price, -pos))
-
-
-
-
-
 
                     if len(order_depth.buy_orders) != 0:
                         best_bid, best_bid_amount = list(order_depth.buy_orders.items())[0]
                         if int(best_bid) > amethyst_price:
-                            #print("SELL", str(best_bid_amount) + "x", best_bid)
-                            if pos<20 :
+                            # print("SELL", str(best_bid_amount) + "x", best_bid)
+                            if pos < 20:
                                 sell_amount = 20 + pos
                                 orders.append(Order(product, amethyst_sell, -sell_amount))
-                    elif pos>0 :
-                            orders.append(Order(product, amethyst_price, -pos))
-
+                    elif pos > 0:
+                        orders.append(Order(product, amethyst_price, -pos))
 
                 result[product] = orders
 
