@@ -64,7 +64,7 @@ amethyst_bid_price_2_no_nan = np.nan_to_num(amethyst_bid_price_2, nan=0)
 amethyst_bid_price_3_no_nan = np.nan_to_num(amethyst_bid_price_3, nan=0)
 max12_no_nan=np.maximum(amethyst_bid_price_1_no_nan,amethyst_bid_price_2_no_nan)#works ok
 max123_amethyst=np.maximum(max12_no_nan,amethyst_bid_price_3_no_nan)
-print(max123_amethyst)
+#print(max123_amethyst)
 
 #print min and max
 #print(amethyst_mid_prices)
@@ -73,3 +73,37 @@ plt.scatter(x[0:len(min123_amethyst)],min123_amethyst)
 plt.xlabel("time stamp")
 plt.ylabel("price of amethyst-min and max")
 plt.show()
+
+
+#table of minimum ask
+counter_ask=np.zeros(13)
+
+#print(min123_amethyst<10000)
+for i in range(13):
+    #print((min123_amethyst<(10000+i))
+    temp=min123_amethyst<(9996+i)
+    counter_ask[i]=np.sum(temp)
+
+print("")
+print("")
+print("")
+for i in range(len(counter_ask)):
+    print("Ask< ",9996+i," :",counter_ask[i])
+
+
+counter_bid = np.zeros(13)
+# print(min123_amethyst<10000)
+for i in range(13):
+    # print((min123_amethyst<(10000+i))
+    temp = max123_amethyst > (9994 + i)
+    counter_bid[i] = np.sum(temp)
+
+print("")
+print("")
+print("")
+for i in range(len(counter_bid)):
+    print("Bid> ", 9994 + i, " :", counter_bid[i])
+
+#
+
+
