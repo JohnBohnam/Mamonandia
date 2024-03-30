@@ -45,8 +45,8 @@ class Trader:
                             if pos > -20:
                                 buy_amount = 20 - pos
                                 orders.append(Order(product, amethyst_buy, buy_amount))
-                        elif pos < 0:
-                            orders.append(Order(product, amethyst_price, -pos))
+                       # elif pos < 0:
+                       #     orders.append(Order(product, amethyst_price, -pos))
 
                     if len(order_depth.buy_orders) != 0:
                         best_bid, best_bid_amount = list(order_depth.buy_orders.items())[0]
@@ -55,8 +55,8 @@ class Trader:
                             if pos < 20:
                                 sell_amount = 20 + pos
                                 orders.append(Order(product, amethyst_sell, -sell_amount))
-                        elif pos > 0:
-                            orders.append(Order(product, amethyst_price, -pos))
+                        #elif pos > 0:
+                        #    orders.append(Order(product, amethyst_price, -pos))
 
                 result[product] = orders
 
