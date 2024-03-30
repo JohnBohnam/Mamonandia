@@ -13,8 +13,8 @@ def parse_multiline_json(lines):
     elif not line.startswith("}") and block is not None:
       block.append(line)
     elif line.startswith("}"):
-      block.append(line)
-      result.append(eval(" ".join(block)))
+      block.append(line.replace(",",""))
+      result.append(eval("".join(block)))
       block = None
   return result
 def split_log_categories(filename):
@@ -69,17 +69,17 @@ if __name__ == '__main__':
   print("Sandbox logs head:")
   sandbox_logs_df = pd.DataFrame(parse_multiline_json(sandbox_logs))
   print(sandbox_logs_df.head())
-  sandbox_logs_df.to_csv(os.path.join(folder, 'sandbox_logs.csv'), index=False)
+  sandbox_logs_df.to_csv(os.path.join(folder, 'sandbox_logs.csv'), index=False, sep = ';' )
   
   print("\nActivities logs:")
   data_list = [row.split(';') for row in activities_logs[1:]]
   column_names = activities_logs[0].split(';')
   activities_df = pd.DataFrame(data_list, columns=column_names)
   print(activities_df.head())
-  activities_df.to_csv(os.path.join(folder, 'activities_logs.csv'), index=False)
+  activities_df.to_csv(os.path.join(folder, 'activities_logs.csv'), index=False, sep = ';')
   
   
   print("\nTrade History logs:")
   trade_history_df = pd.DataFrame(parse_multiline_json(trade_history_logs))
   print(trade_history_df.head())
-  trade_history_df.to_csv(os.path.join(folder, 'trade_history_logs.csv'), index=False)
+  trade_history_df.to_csv(os.path.join(folder, 'trade_history_logs.csv'), index=False, sep = ';')
