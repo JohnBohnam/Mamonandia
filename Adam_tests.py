@@ -24,20 +24,19 @@ class Trader:
             orders: List[Order] = []
             order_depth: OrderDepth = state.order_depths[product]
             if product in state.order_depths:
-                # temp = list(order_depth.sell_orders.keys())
-                # temp.sort()
-                # temp_buy = list(order_depth.buy_orders.keys())
-                # temp_buy.sort()
-                # lowestAskPrice = temp[0]  # state.order_depths[product].keys().sort()[0]
-                # highestBidPrice = temp_buy[-1]
+                pos = 0
+                if product in state.position:
+                    pos = state.position[product]
+
+                if pos == self.limits[product]:
+                    self.limit_hits_up[product] += 1
+                elif pos == -self.limits[product]:
+                    self.limit_hits_down[product] += 1
 
                 if product == "AMETHYSTS":
                     amethyst_price = 10000
                     amethyst_buy = 10001
                     amethyst_sell = 9999
-                    pos = 0
-                    if product in state.position:
-                        pos = state.position[product]
 
                     if len(order_depth.sell_orders) != 0:
                         best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]  # posortowane
