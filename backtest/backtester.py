@@ -466,7 +466,9 @@ def create_log_file(round: int, day: int, states: dict[int, TradingState], profi
     timest = datetime.timestamp(datetime.now())
     max_time = max(list(states.keys()))
     log_path = os.path.join('logs', f'{timest}_{file_name}.log')
-    with open(log_path, 'w', encoding="utf-8", newline='\n') as f:
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+    with open(log_path, mode='w', encoding="utf-8", newline='\n') as f:
         f.writelines(log_header)
         f.write('\n')
         for time, state in states.items():
