@@ -1,6 +1,8 @@
 # from one_day_Trader import Trader
-# from basic_trader import Trader
-from Strategy2023.trader import Trader
+from plotters import Plotter
+from basic_trader import Trader
+import matplotlib.pyplot as plt
+# from Strategy2023.trader import Trader
 from datamodel import *
 from typing import Any  #, Callable
 import numpy as np
@@ -129,6 +131,14 @@ def process_prices(df_prices, round, time_limit) -> dict[int, TradingState]:
     return states
 
 def process_trades(df_trades, states: dict[int, TradingState], time_limit, names=True):
+    '''
+    add trades to the book orders. No order exercise included
+    :param df_trades:
+    :param states:
+    :param time_limit:
+    :param names:
+    :return:
+    '''
     for _, trade in df_trades.iterrows():
         time: int = trade['timestamp']
         if time > time_limit:
@@ -199,6 +209,9 @@ def simulate_alternative(
 
     states, trader, profits_by_symbol, balance_by_symbol = trades_position_pnl_run(states, max_time, profits_by_symbol, balance_by_symbol, credit_by_symbol, unrealized_by_symbol)
     create_log_file(round, day, states, profits_by_symbol, balance_by_symbol, trader)
+    kwargs = {"states": states,"trader": trader, "profits_by_symbol": profits_by_symbol, "balance_by_symbol": balance_by_symbol}
+    plotter = Plotter(SYMBOLS_BY_ROUND_POSITIONABLE[round], **kwargs)
+    plotter.plot_stats()
     profit_balance_monkeys = {}
     trades_monkeys = {}
     if monkeys:
@@ -246,12 +259,12 @@ def trades_position_pnl_run(
                         print('ILLEGAL TRADE, WOULD EXCEED POSITION LIMIT, KILLING ALL REMAINING ORDERS')
                         trade_vars = vars(trade)
                         trade_str = ', '.join("%s: %s" % item for item in trade_vars.items())
-                        print(f'Stopped at the following trade: {trade_str}')
-                        print(f"All trades that were sent:")
+                        # print(f'Stopped at the following trade: {trade_str}')
+                        # print(f"All trades that were sent:")
                         for trade in trades:
                             trade_vars = vars(trade)
                             trades_str = ', '.join("%s: %s" % item for item in trade_vars.items())
-                            print(trades_str)
+                            # print(trades_str)
                         failed_symbol.append(trade.symbol)
                     else:
                         valid_trades.append(trade) 
@@ -395,9 +408,9 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
                             min_ask = min(asks)
                             if order.price <= statistics.median([max_bid, min_ask]):
                                 trades.append(Trade(symbol, order.price, order.quantity, "BOT", "YOU", time))
-                            else:
-                                print(f'No matches for order {order} at time {time}')
-                                print(f'Order depth is {order_depth[order.symbol].__dict__}')
+                            # else:
+                                # print(f'No matches for order {order} at time {time}')
+                                # print(f'Order depth is {order_depth[order.symbol].__dict__}')
                         else:
                             potential_matches = list(filter(lambda o: o[0] == order.price, symbol_order_depth.buy_orders.items()))
                             if len(potential_matches) > 0:
@@ -409,9 +422,9 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
                                     #this should be negative
                                     final_volume = -match[1]
                                 trades.append(Trade(symbol, order.price, final_volume, "BOT", "YOU", time))
-                            else:
-                                print(f'No matches for order {order} at time {time}')
-                                print(f'Order depth is {order_depth[order.symbol].__dict__}')
+                            # else:
+                                # print(f'No matches for order {order} at time {time}')
+                                # print(f'Order depth is {order_depth[order.symbol].__dict__}')
                     if order.quantity > 0:
                         if halfway:
                             bids = symbol_order_depth.buy_orders.keys()
@@ -420,9 +433,9 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
                             min_ask = min(asks)
                             if order.price >= statistics.median([max_bid, min_ask]):
                                 trades.append(Trade(symbol, order.price, order.quantity, "YOU", "BOT", time))
-                            else:
-                                print(f'No matches for order {order} at time {time}')
-                                print(f'Order depth is {order_depth[order.symbol].__dict__}')
+                            # else:
+                            #     print(f'No matches for order {order} at time {time}')
+                            #     print(f'Order depth is {order_depth[order.symbol].__dict__}')
                         else:
                             potential_matches = list(filter(lambda o: o[0] == order.price, symbol_order_depth.sell_orders.items()))
                             if len(potential_matches) > 0:
@@ -434,9 +447,9 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
                                 else:
                                     final_volume = abs(match[1])
                                 trades.append(Trade(symbol, order.price, final_volume, "YOU", "BOT", time))
-                            else:
-                                print(f'No matches for order {order} at time {time}')
-                                print(f'Order depth is {order_depth[order.symbol].__dict__}')
+                            # else:
+                            #     print(f'No matches for order {order} at time {time}')
+                            #     print(f'Order depth is {order_depth[order.symbol].__dict__}')
         return trades
                             
 csv_header = "day;timestamp;product;bid_price_1;bid_volume_1;bid_price_2;bid_volume_2;bid_price_3;bid_volume_3;ask_price_1;ask_volume_1;ask_price_2;ask_volume_2;ask_price_3;ask_volume_3;mid_price;profit_and_loss\n"
@@ -516,14 +529,16 @@ def create_log_file(round: int, day: int, states: dict[int, TradingState], profi
         print(f"\nSimulation on round {round} day {day} for time {max_time} complete")
 
 
+
+
 # Adjust accordingly the round and day to your needs
 if __name__ == "__main__":
     trader = Trader()
     max_time =9 #int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
     if max_time < 10:
         max_time *= 100000
-    round = 4#int(input("Input a round (blank for 4): ") or 4)
-    day = 3#int(input("Input a day (blank for random): ") or random.randint(1, 3))
+    round = 1#int(input("Input a round (blank for 4): ") or 4)
+    day = 0#int(input("Input a day (blank for random): ") or random.randint(1, 3))
     names_in ="y"# input("With bot names (default: y) (y/n): ")
     names = True
     if 'n' in names_in:
