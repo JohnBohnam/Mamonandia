@@ -1,6 +1,5 @@
 # from one_day_Trader import Trader
 from plotters import Plotter
-from basic_trader import Trader
 import matplotlib.pyplot as plt
 # from Strategy2023.trader import Trader
 from datamodel import *
@@ -13,6 +12,9 @@ import uuid
 import random
 import os
 from datetime import datetime
+
+from reaserch_trader import Trader
+
 
 # Timesteps used in training files
 TIME_DELTA = 100
