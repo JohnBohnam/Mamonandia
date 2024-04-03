@@ -252,7 +252,7 @@ def trades_position_pnl_run(
                         continue
                     n_position = position[trade.symbol] + trade.quantity
                     if abs(n_position) > current_limits[trade.symbol]:
-                        print('ILLEGAL TRADE, WOULD EXCEED POSITION LIMIT, KILLING ALL REMAINING ORDERS')
+                        raise ValueError('ILLEGAL TRADE, WOULD EXCEED POSITION LIMIT, KILLING ALL REMAINING ORDERS')
                         trade_vars = vars(trade)
                         trade_str = ', '.join("%s: %s" % item for item in trade_vars.items())
                         # print(f'Stopped at the following trade: {trade_str}')
