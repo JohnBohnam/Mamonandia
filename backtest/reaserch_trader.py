@@ -20,8 +20,8 @@ class Trader:
         self.prev_price = None
         self.last_bid = None
         self.last_ask = None
-        self.mode = "site"
-        # self.mode = "local"
+        # self.mode = "site"
+        self.mode = "local"
 
         self.magic_number = -0.45559303
 
@@ -43,8 +43,8 @@ class Trader:
             product = "STARFRUIT"
         result = {}
         self.runs += 1
-        print(f"limits up: {self.limit_hits_up}, limits down: {self.limit_hits_down}\n")
-        print(f"runs: {self.runs}\n")
+        # print(f"limits up: {self.limit_hits_up}, limits down: {self.limit_hits_down}\n")
+        # print(f"runs: {self.runs}\n")
         position = state.position
         for product in self.products:
             if product in position and position[product] == self.limits[product]:
@@ -75,8 +75,8 @@ class Trader:
             # sell if next price is lower than current price
             pos = position[product] if product in position else 0
             orders = [Order(product, next_price_pred + 1, -pos - 20), Order(product, next_price_pred - 1, 20 - pos)]
-            print(f"buying {20 - pos} of {product} at {next_price_pred + 1}")
-            print(f"selling {pos - 20} of {product} at {next_price_pred - 1}")
+            # print(f"buying {20 - pos} of {product} at {next_price_pred + 1}")
+            # print(f"selling {pos - 20} of {product} at {next_price_pred - 1}")
             result[product] = orders
 
         self.prev_price = price

@@ -214,13 +214,6 @@ def simulate_alternative(
     kwargs = {"states": states,"trader": trader, "profits_by_symbol": profits_by_symbol, "balance_by_symbol": balance_by_symbol}
     plotter = Plotter(SYMBOLS_BY_ROUND_POSITIONABLE[round], **kwargs)
     plotter.plot_stats()
-    profit_balance_monkeys = {}
-    trades_monkeys = {}
-    if monkeys:
-        profit_balance_monkeys, trades_monkeys, profit_monkeys, balance_monkeys, monkey_positions_by_timestamp = monkey_positions(monkey_names, states, round)
-        print("End of monkey simulation reached.")
-        print(f'PNL + BALANCE monkeys {profit_balance_monkeys[max_time]}')
-        print(f'Trades monkeys {trades_monkeys[max_time]}')
     if hasattr(trader, 'after_last_round'):
         if callable(trader.after_last_round): #type: ignore
             trader.after_last_round(profits_by_symbol, balance_by_symbol) #type: ignore
@@ -238,6 +231,7 @@ def trades_position_pnl_run(
             position = copy.deepcopy(state.position)
             orders = trader.run(state)
             trades = clear_order_book(orders, state.order_depths, time, halfway)
+
             mids = calc_mid(states, round, time, max_time)
             if profits_by_symbol.get(time + TIME_DELTA) == None and time != max_time:
                 profits_by_symbol[time + TIME_DELTA] = copy.deepcopy(profits_by_symbol[time])
@@ -278,13 +272,24 @@ def trades_position_pnl_run(
                     if grouped_by_symbol.get(valid_trade.symbol) == None:
                         grouped_by_symbol[valid_trade.symbol] = []
                     grouped_by_symbol[valid_trade.symbol].append(valid_trade)
-                    credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] += -valid_trade.price * valid_trade.quantity
+                    new_credit = -valid_trade.price * valid_trade.quantity
+                    if new_credit* credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol]>=0: # same sign and position size increased, so profit cannot be decided
+                        credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] += new_credit
+                    else:
+                        # calculate avg price in the credit and then calculate profit
+                        old_position = position[valid_trade.symbol] - valid_trade.quantity
+                        avg_price = abs(credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol]) / abs(old_position)
+                        profit = (valid_trade.price - avg_price) * (-valid_trade.quantity) #if quantity is negative and trade price is high it means that we have profit
+                        credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] += new_credit
+                        profits_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] += profit
+
+                    
             if states.get(time + FLEX_TIME_DELTA) != None:
                 states[time + FLEX_TIME_DELTA].own_trades = grouped_by_symbol
                 for psymbol in SYMBOLS_BY_ROUND_POSITIONABLE[round]:
                     unrealized_by_symbol[time + FLEX_TIME_DELTA][psymbol] = mids[psymbol]*position[psymbol]
                     if position[psymbol] == 0 and states[time].position[psymbol] != 0:
-                        profits_by_symbol[time + FLEX_TIME_DELTA][psymbol] += credit_by_symbol[time + FLEX_TIME_DELTA][psymbol] #+unrealized_by_symbol[time + FLEX_TIME_DELTA][psymbol]
+                        # profits_by_symbol[time + FLEX_TIME_DELTA][psymbol] += -credit_by_symbol[time][psymbol] +unrealized_by_symbol[time + FLEX_TIME_DELTA][psymbol]
                         credit_by_symbol[time + FLEX_TIME_DELTA][psymbol] = 0
                         balance_by_symbol[time + FLEX_TIME_DELTA][psymbol] = 0
                     else:
@@ -294,93 +299,12 @@ def trades_position_pnl_run(
                 print("End of simulation reached. All positions left are liquidated")
                 # i have the feeling this already has been done, and only repeats the same values as before
                 for osymbol in position.keys():
-                    profits_by_symbol[time + FLEX_TIME_DELTA][osymbol] += credit_by_symbol[time + FLEX_TIME_DELTA][osymbol] + unrealized_by_symbol[time + FLEX_TIME_DELTA][osymbol]
+                    profits_by_symbol[time + FLEX_TIME_DELTA][osymbol] +=unrealized_by_symbol[time + FLEX_TIME_DELTA][osymbol] + credit_by_symbol[time + FLEX_TIME_DELTA][osymbol]
                     balance_by_symbol[time + FLEX_TIME_DELTA][osymbol] = 0
             if states.get(time + FLEX_TIME_DELTA) != None:
                 states[time + FLEX_TIME_DELTA].position = copy.deepcopy(position)
         return states, trader, profits_by_symbol, balance_by_symbol
 
-def monkey_positions(monkey_names: list[str], states: dict[int, TradingState], round):
-    profits_by_symbol: dict[int, dict[str, dict[str, float]]] = { 0: {} }
-    balance_by_symbol: dict[int, dict[str, dict[str, float]]] =  { 0: {} }
-    credit_by_symbol: dict[int, dict[str, dict[str, float]]] = { 0: {} }
-    unrealized_by_symbol: dict[int, dict[str, dict[str, float]]] = { 0: {} }
-    prev_monkey_positions: dict[str, dict[str, int]] = {}
-    monkey_positions: dict[str, dict[str, int]] = {}
-    trades_by_round: dict[int, dict[str, list[Trade]]]  = { 0: dict(zip(monkey_names,  [[] for x in range(len(monkey_names))])) }
-    profit_balance: dict[int, dict[str, dict[str, float]]] = { 0: {} }
-
-    monkey_positions_by_timestamp: dict[int, dict[str, dict[str, int]]] = {}
-
-    for monkey in monkey_names:
-        ref_symbols = list(states[0].position.keys())
-        profits_by_symbol[0][monkey] = dict(zip(ref_symbols, [0.0]*len(ref_symbols)))
-        balance_by_symbol[0][monkey] = copy.deepcopy(profits_by_symbol[0][monkey])
-        credit_by_symbol[0][monkey] = copy.deepcopy(profits_by_symbol[0][monkey])
-        unrealized_by_symbol[0][monkey] = copy.deepcopy(profits_by_symbol[0][monkey])
-        profit_balance[0][monkey] = copy.deepcopy(profits_by_symbol[0][monkey])
-        monkey_positions[monkey] = dict(zip(SYMBOLS_BY_ROUND_POSITIONABLE[round], [0]*len(SYMBOLS_BY_ROUND_POSITIONABLE[round])))
-        prev_monkey_positions[monkey] = copy.deepcopy(monkey_positions[monkey])
-
-    for time, state in states.items():
-        already_calculated = False
-        for monkey in monkey_names:
-            position = copy.deepcopy(monkey_positions[monkey])
-            mids = calc_mid(states, round, time, max_time)
-            if trades_by_round.get(time + TIME_DELTA) == None:
-                trades_by_round[time + TIME_DELTA] =  copy.deepcopy(trades_by_round[time])
-
-            for psymbol in POSITIONABLE_SYMBOLS:
-                if already_calculated:
-                    break
-                if state.market_trades.get(psymbol):
-                    for market_trade in state.market_trades[psymbol]:
-                        if trades_by_round[time].get(market_trade.buyer) != None:
-                            trades_by_round[time][market_trade.buyer].append(Trade(psymbol, market_trade.price, market_trade.quantity))
-                        if trades_by_round[time].get(market_trade.seller) != None:
-                            trades_by_round[time][market_trade.seller].append(Trade(psymbol, market_trade.price, -market_trade.quantity))
-            already_calculated = True
-
-            if profit_balance.get(time + TIME_DELTA) == None and time != max_time:
-                profit_balance[time + TIME_DELTA] = copy.deepcopy(profit_balance[time])
-            if profits_by_symbol.get(time + TIME_DELTA) == None and time != max_time:
-                profits_by_symbol[time + TIME_DELTA] = copy.deepcopy(profits_by_symbol[time])
-            if credit_by_symbol.get(time + TIME_DELTA) == None and time != max_time:
-                credit_by_symbol[time + TIME_DELTA] = copy.deepcopy(credit_by_symbol[time])
-            if balance_by_symbol.get(time + TIME_DELTA) == None and time != max_time:
-                balance_by_symbol[time + TIME_DELTA] = copy.deepcopy(balance_by_symbol[time])
-            if unrealized_by_symbol.get(time + TIME_DELTA) == None and time != max_time:
-                unrealized_by_symbol[time + TIME_DELTA] = copy.deepcopy(unrealized_by_symbol[time])
-                for psymbol in SYMBOLS_BY_ROUND_POSITIONABLE[round]:
-                    unrealized_by_symbol[time + TIME_DELTA][monkey][psymbol] = mids[psymbol]*position[psymbol]
-            valid_trades = []
-            if trades_by_round[time].get(monkey) != None:  
-                valid_trades = trades_by_round[time][monkey]
-            FLEX_TIME_DELTA = TIME_DELTA
-            if time == max_time:
-                FLEX_TIME_DELTA = 0
-            for valid_trade in valid_trades:
-                    position[valid_trade.symbol] += valid_trade.quantity
-                    credit_by_symbol[time + FLEX_TIME_DELTA][monkey][valid_trade.symbol] += -valid_trade.price * valid_trade.quantity
-            if states.get(time + FLEX_TIME_DELTA) != None:
-                for psymbol in SYMBOLS_BY_ROUND_POSITIONABLE[round]:
-                    unrealized_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] = mids[psymbol]*position[psymbol]
-                    if position[psymbol] == 0 and prev_monkey_positions[monkey][psymbol] != 0:
-                        profits_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] += credit_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol]
-                        credit_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] = 0
-                        balance_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] = 0
-                    else:
-                        balance_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] = credit_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] + unrealized_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol]
-                    profit_balance[time + FLEX_TIME_DELTA][monkey][psymbol] = profits_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol] + balance_by_symbol[time + FLEX_TIME_DELTA][monkey][psymbol]
-            prev_monkey_positions[monkey] = copy.deepcopy(monkey_positions[monkey])
-            monkey_positions[monkey] = position
-            if time == max_time:
-                # i have the feeling this already has been done, and only repeats the same values as before
-                for osymbol in position.keys():
-                    profits_by_symbol[time + FLEX_TIME_DELTA][monkey][osymbol] += credit_by_symbol[time + FLEX_TIME_DELTA][monkey][osymbol] + unrealized_by_symbol[time + FLEX_TIME_DELTA][monkey][osymbol]
-                    balance_by_symbol[time + FLEX_TIME_DELTA][monkey][osymbol] = 0
-        monkey_positions_by_timestamp[time] = copy.deepcopy(monkey_positions)
-    return profit_balance, trades_by_round, profits_by_symbol, balance_by_symbol, monkey_positions_by_timestamp
 
 
 def cleanup_order_volumes(org_orders: List[Order]) -> List[Order]:
@@ -547,7 +471,7 @@ if __name__ == "__main__":
     names = True
     if 'n' in names_in:
         names = False
-    halfway_in = "y"#input("Matching orders halfway (default: n) (y/n): ")
+    halfway_in = "n"#input("Matching orders halfway (default: n) (y/n): ")
     halfway = False 
     if 'y' in halfway_in:
         halfway = True
