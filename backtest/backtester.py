@@ -1,19 +1,15 @@
 # from one_day_Trader import Trader
 from plotters import Plotter
-import matplotlib.pyplot as plt
 # from Strategy2023.trader import Trader
 from datamodel import *
-from typing import Any  #, Callable
-import numpy as np
 import pandas as pd
 import statistics
 import copy
 import uuid
-import random
 import os
 from datetime import datetime
 
-from reaserch_trader import Trader
+from stupidon import Trader
 
 
 # Timesteps used in training files
