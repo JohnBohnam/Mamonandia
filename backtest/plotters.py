@@ -5,7 +5,8 @@ from datamodel import *
 class Plotter:
     '''
 	prepare stats based on the states, trader, profits_by_symbol, balance_by_symbol
-	the stats_dict is of the form {title: (x, {label: y})} OR {title: (x, y)}
+	the stats_dict is of the form {title: (x, {label: y})} OR {title: (x, y)} or {title:(x,{label:(y,style)})}
+	where x is the timestamps, y is the values, label is the label for the values, style is the style for the values
 	'''
 
     def __init__(self, symbols, states, trader, profits_by_symbol, balance_by_symbol):
@@ -22,12 +23,16 @@ class Plotter:
         self.profits_by_symbol = profits_by_symbol
         self.balance_by_symbol = balance_by_symbol
         self.stats_dict = {
-            "Profit by symbol": self.get_profits_per_product(),
-            "Exposure by symbol": self.get_balance_per_product(),
-            "Position by symbol": self.get_position_per_product(),
+            "Profit by symbol": self.get_profits_per_symbol(),
+            "Exposure by symbol": self.get_balance_per_symbol(),
+            "Position by symbol": self.get_position_per_symbol(),
         }
+        #trading books:
+        for symbol in self.symbols:
+            self.stats_dict[f"Trading book for {symbol}"] = self.get_trading_book_for_symbol(symbol)
+        #
 
-    def get_profits_per_product(self):
+    def get_profits_per_symbol(self):
         profits_by_symbol = self.profits_by_symbol
         result = {}
         for symbol in self.symbols:
@@ -36,7 +41,7 @@ class Plotter:
             result[symbol] = profits
         return (timestamps, result)
 
-    def get_balance_per_product(self):
+    def get_balance_per_symbol(self):
         balance_by_symbol = self.balance_by_symbol
         result = {}
         for symbol in self.symbols:
@@ -45,7 +50,7 @@ class Plotter:
             result[symbol] = balances
         return (timestamps, result)
 
-    def get_position_per_product(self):
+    def get_position_per_symbol(self):
         states = self.states
         result = {}
         for symbol in self.symbols:
@@ -53,6 +58,50 @@ class Plotter:
             positions = [states[ts].position[symbol] for ts in timestamps]
             result[symbol] = positions
         return (timestamps, result)
+    
+    def get_trading_book_for_symbol(self, symbol):
+        timestamps, book = self.get_best_bid_and_ask_for_symbol(symbol)
+        _, orders = self.get_submitted_orders_for_symbol(symbol)
+        return (timestamps, {"best_bid": (book["bid"], "-"), "best_ask": (book["ask"], "-"), "submitted_buy": (orders["buy"], "x"), "submitted_sell": (orders["sell"], "x")})
+    def get_best_bid_and_ask_for_symbol(self, symbol):
+        states = self.states
+        result = {"bid": [], "ask": []}
+        timestamps = states.keys()
+        for ts in timestamps:
+            bids = states[ts].order_depths[symbol].buy_orders
+            asks = states[ts].order_depths[symbol].sell_orders
+            if len(bids) > 0:
+                best_bid = max(bids.keys())
+            else:
+                best_bid = None
+            if len(asks) > 0:
+                best_ask = min(asks.keys())
+            else:
+                best_ask = None
+            result["bid"].append(best_bid)
+            result["ask"].append(best_ask)
+        return (timestamps, result)
+    
+    def get_submitted_orders_for_symbol(self, symbol):
+        states = self.states
+        result = {"buy": [], "sell": []}
+        timestamps = states.keys()
+        for ts in timestamps:
+            orders = self.trader.run(states[ts]).get(symbol, [])
+            buy_orders = [order for order in orders if order.quantity > 0]
+            sell_orders = [order for order in orders if order.quantity < 0]
+            if len(buy_orders) > 0:
+                best_buy = max([order.price for order in buy_orders])
+            else:
+                best_buy = None
+            if len(sell_orders) > 0:
+                best_sell = min([order.price for order in sell_orders])
+            else:
+                best_sell = None
+            result["buy"].append(best_buy)
+            result["sell"].append(best_sell)
+        return (timestamps, result)
+        
 
     def get_bids(self):
         states = self.states
@@ -107,8 +156,14 @@ class Plotter:
                 ax.plot(x, y)
             else:
                 x = stats[0]
-                for label, y in stats[1].items():
-                    ax.plot(x, y, label=label)
+                for key, value in stats[1].items():
+                    label = key
+                    if len(value)==2:
+                        y, style = value
+                        ax.plot(x, y, style, label=label)
+                    else:
+                        y = value
+                        ax.plot(x, y, label=label)
             ax.set_title(title)
             ax.legend()
         # plot the trades
