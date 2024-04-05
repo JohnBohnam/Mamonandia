@@ -146,8 +146,7 @@ class Plotter:
     # dict for the plot, key is title, value is a function that can take any of states, trader, profits_by_symbol, balance_by_symbol
     def plot_stats(self):
         num_plots = len(self.stats_dict)
-        num_plots += 1
-        fig, axes = plt.subplots(1, num_plots, figsize=(6 * num_plots, 6))
+        fig, axes = plt.subplots(num_plots, 1, figsize=(6, 6*num_plots))
 
         for i, (title, stats) in enumerate(self.stats_dict.items()):
             ax = axes[i]
@@ -165,53 +164,6 @@ class Plotter:
                         y = value
                         ax.plot(x, y, label=label)
             ax.set_title(title)
-            ax.legend()
-        # plot the trades
-        ax = axes[-1]
-        buys, sells = self.get_trades_done()
-        asks = self.get_asks()
-        bids = self.get_bids()
-        for symbol in self.symbols:
-
-            if symbol != "BANANAS":
-                continue
-            # sell_t, sell_p, sell_q = zip(*sells[symbol])
-            # this does not work, idk why, python dumb
-            sts = []
-            sps = []
-            sqs = []
-            for t, p, q in sells[symbol]:
-                sts.append(t)
-                sps.append(p)
-                sqs.append(q)
-
-            plt.scatter(sts, sps, color="red")
-
-            bts = []
-            bps = []
-            bqs = []
-            for t, p, q in buys[symbol]:
-                bts.append(t)
-                bps.append(p)
-                bqs.append(q)
-
-            plt.scatter(bts, bps, color="blue")
-
-            # print(self.get_asks()[symbol])
-            best_asks = {}
-            for timestamp, act_asks in asks[symbol].items():
-                if len(act_asks) > 0:
-                    best_asks[timestamp] = list(act_asks.keys())[0]
-
-            best_bids = {}
-            for timestamp, act_bids in bids[symbol].items():
-                if len(act_bids) > 0:
-                    best_bids[timestamp] = list(act_bids.keys())[-1]
-                    print(best_bids[timestamp])
-
-
-            ax.plot(best_asks.keys(), best_asks.values(), label="best ask", color="lightblue")
-            ax.plot(best_bids.keys(), best_bids.values(), label='best_bid', color="orange")
             ax.legend()
 
         plt.tight_layout()

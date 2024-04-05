@@ -473,7 +473,7 @@ def create_log_file(round: int, day: int, states: dict[int, TradingState], profi
 # Adjust accordingly the round and day to your needs
 if __name__ == "__main__":
     curr_trader = Trader()
-    max_time =1 #int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
+    max_time = 9 #int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
     if max_time < 10:
         max_time *= 100000
     round = 1#int(input("Input a round (blank for 4): ") or 4)
