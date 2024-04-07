@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 from datamodel import *
 
-
 class Plotter:
     '''
 	prepare stats based on the states, trader, profits_by_symbol, balance_by_symbol
@@ -9,7 +8,7 @@ class Plotter:
 	where x is the timestamps, y is the values, label is the label for the values, style is the style for the values
 	'''
 
-    def __init__(self, symbols, states, trader, profits_by_symbol, balance_by_symbol):
+    def __init__(self, symbols, states, trader, profits_by_symbol, balance_by_symbol, old=True):
         '''
 		:param symbols: [str]
 		:param states: dict[timestamp, TradingState]
@@ -22,6 +21,7 @@ class Plotter:
         self.trader = trader
         self.profits_by_symbol = profits_by_symbol
         self.balance_by_symbol = balance_by_symbol
+        self.old = old
         self.stats_dict = {
             "Profit by symbol": self.get_profits_per_symbol(),
             "Exposure by symbol": self.get_balance_per_symbol(),
@@ -87,7 +87,11 @@ class Plotter:
         result = {"buy": [], "sell": []}
         timestamps = states.keys()
         for ts in timestamps:
-            orders = self.trader.run(states[ts]).get(symbol, [])
+            if self.old:
+                orders = self.trader.run(states[ts]).get(symbol, [])
+            else:
+                orders,_,_ = self.trader.run(states[ts])
+                orders = orders.get(symbol, [])
             buy_orders = [order for order in orders if order.quantity > 0]
             sell_orders = [order for order in orders if order.quantity < 0]
             if len(buy_orders) > 0:
