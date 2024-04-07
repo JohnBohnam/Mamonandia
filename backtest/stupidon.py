@@ -12,6 +12,10 @@ import numpy as np
 
 class Trader:
 
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+
     def __init__(self, buy_margin=5, sell_margin=5, time_window=2, verbose=False):
         self.bullshit = 0
         self.limit_hits_up = {}
@@ -24,12 +28,15 @@ class Trader:
         # print(f"buy_margin: {buy_margin}, sell_margin: {sell_margin}, time_window: {time_window}")
 
         # the bigger the time window, the more conservative the trader
-        self.time_window = time_window
+        # self.time_window = time_window
 
         # the lesser the margin, the more aggressive the trader
-        self.buy_margin = buy_margin
-        self.sell_margin = sell_margin
+        # self.buy_margin = buy_margin
+        # self.sell_margin = sell_margin
+
         self.verbose = verbose
+
+        self.set_params(**{'buy_margin': 0.7850037515086065, 'sell_margin': 0.6388820974848624, 'time_window': 6.469020211030575})
 
         self.products = ["STARFRUIT"]
 
