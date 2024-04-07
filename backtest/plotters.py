@@ -146,7 +146,7 @@ class Plotter:
     # dict for the plot, key is title, value is a function that can take any of states, trader, profits_by_symbol, balance_by_symbol
     def plot_stats(self):
         num_plots = len(self.stats_dict)
-        fig, axes = plt.subplots(num_plots, 1, figsize=(6, 6*num_plots))
+        fig, axes = plt.subplots(num_plots, 1, figsize=(6, 6*num_plots), sharex = True)
 
         for i, (title, stats) in enumerate(self.stats_dict.items()):
             ax = axes[i]
