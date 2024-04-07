@@ -12,7 +12,7 @@ import numpy as np
 
 class Trader:
 
-    def __init__(self):
+    def __init__(self, buy_margin=5, sell_margin=5, time_window=2, verbose=False):
         self.bullshit = 0
         self.limit_hits_up = {}
         self.limit_hits_down = {}
@@ -21,20 +21,17 @@ class Trader:
         self.prev_bids = []
         self.prev_asks = []
 
+        # print(f"buy_margin: {buy_margin}, sell_margin: {sell_margin}, time_window: {time_window}")
+
         # the bigger the time window, the more conservative the trader
-        self.time_window = 3
+        self.time_window = time_window
 
         # the lesser the margin, the more aggressive the trader
-        self.buy_margin = 5
-        self.sell_margin = 5
+        self.buy_margin = buy_margin
+        self.sell_margin = sell_margin
+        self.verbose = verbose
 
-        self.mode = "site"
-        # self.mode = "local"
-
-        if self.mode == "local":
-            self.products = ["BANANAS"]
-        else:
-            self.products = ["STARFRUIT"]
+        self.products = ["STARFRUIT"]
 
         for product in self.products:
             self.limit_hits_up[product] = 0
@@ -72,10 +69,8 @@ class Trader:
             self.prev_asks.pop(0)
 
     def run(self, state: TradingState):
-        if self.mode == "local":
-            product = "BANANAS"
-        else:
-            product = "STARFRUIT"
+        product = "STARFRUIT"
+
         self.runs += 1
         # print(f"limits up: {self.limit_hits_up}, limits down: {self.limit_hits_down}\n")
         # print(f"runs: {self.runs}\n")
@@ -88,10 +83,7 @@ class Trader:
 
         result = {}
         if product not in state.order_depths:
-            if self.mode == "local":
-                return result
-            else:
-                return result, 0, ""
+            return result, 0, ""
 
         orders = []
         pos = position[product] if product in position else 0
@@ -102,19 +94,18 @@ class Trader:
         if self.prev_bids:
             sell_for = int(np.min(self.prev_bids) + self.sell_margin)
             orders.append(Order(product, sell_for, -20-pos))
-            # print(f"selling {-20-pos} of {product} for {sell_for}")
+            if self.verbose:
+                print(f"pos: {pos}, selling {-20-pos} of {product} for {sell_for}")
 
         if self.prev_asks:
             buy_for = int(np.max(self.prev_asks) - self.buy_margin)
             orders.append(Order(product, buy_for, 20-pos))
-            # print(f"buying {20-pos} of {product} for {buy_for}")
+            if self.verbose:
+                print(f"pos: {pos}, buying {20-pos} of {product} for {buy_for}")
 
         result[product] = orders
 
         self.update_prevs(product, state)
 
-        if self.mode == "local":
-            return result
-        else:
-            return result, 0, ""
+        return result, 0, ""
 

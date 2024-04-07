@@ -211,8 +211,8 @@ def trades_position_pnl_run(
                 if abs(n_position) > current_limits[trade.symbol]:
                     if verbose:
                         print(trade.__dict__)
-                        raise ValueError(
-                            'ILLEGAL TRADE, WOULD EXCEED POSITION LIMIT, KILLING ALL REMAINING ORDERS')
+                        # raise ValueError(
+                        #     'ILLEGAL TRADE, WOULD EXCEED POSITION LIMIT, KILLING ALL REMAINING ORDERS')
 
                 else:
                     valid_trades.append(trade)

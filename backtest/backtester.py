@@ -14,6 +14,8 @@ from consts import *
 from stupidon import Trader
 from backtester_logic import simulate_alternative
 
+import time
+
 # Adjust accordingly the round and day to your needs
 if __name__ == "__main__":
     curr_trader = Trader()
@@ -39,7 +41,18 @@ if __name__ == "__main__":
         trades_path = os.path.join(TRAINING_DATA_PREFIX, f'trades_round_{round_}_day_{day}_nn.csv')
     df_trades = pd.read_csv(trades_path, sep=';', dtype={'seller': str, 'buyer': str})
 
+    # get the time it took to run the simulation
+    start_time = time.time()
+
     profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway,
                                    df_trades=df_trades, df_prices=df_prices,
                                    verbose=False, plotting=False, logging=False)
+    end_time = time.time()
+    print(f"Time taken: {end_time - start_time}")
+
+    start_time = time.time()
+    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, plotting=False)
+    end_time = time.time()
+    print(f"Time taken: {end_time - start_time}")
+
     print(f"profits: {profits}")
