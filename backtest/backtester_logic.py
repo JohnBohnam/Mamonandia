@@ -115,7 +115,6 @@ def simulate_alternative(
         trader,
         time_limit=999900,
         names=True,
-        halfway=False,
         logging=True,
         plotting=True,
         verbose=True,
@@ -153,7 +152,6 @@ def simulate_alternative(
                                                                            credit_by_symbol,
                                                                            unrealized_by_symbol,
                                                                            round_,
-                                                                           halfway=halfway,
                                                                            verbose=verbose)
     if logging:
         create_log_file(round_, day, states, profits_by_symbol, balance_by_symbol, trader)
@@ -169,7 +167,7 @@ def simulate_alternative(
         plotter.plot_stats()
     res = {}
     for symbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
-        res[symbol] = profits_by_symbol[max_time][symbol] + balance_by_symbol[max_time][symbol] # ??
+        res[symbol] = profits_by_symbol[max_time][symbol] + balance_by_symbol[max_time][symbol]  # ??
     return res
 
 
@@ -182,7 +180,6 @@ def trades_position_pnl_run(
         credit_by_symbol: dict[int, dict[str, float]],
         unrealized_by_symbol: dict[int, dict[str, float]],
         round_,
-        halfway=False,
         verbose=True,
 ):
     spent_buy = 0  # variable is useless, only double check the profits in the end
@@ -193,7 +190,7 @@ def trades_position_pnl_run(
             orders = trader.run(state)
         else:
             orders, _, _ = trader.run(state)
-        trades = clear_order_book(orders, state.order_depths, time, halfway)
+        trades = clear_order_book(orders, state.order_depths, time, position)
         mids = calc_mid(states, round_, time, max_time)
         if time != max_time:
             profits_by_symbol[time + TIME_DELTA] = copy.deepcopy(profits_by_symbol[time])
@@ -221,13 +218,13 @@ def trades_position_pnl_run(
         if time == max_time:
             FLEX_TIME_DELTA = 0
         for valid_trade in valid_trades:
-            if grouped_by_symbol.get(valid_trade.symbol) == None:
+            if grouped_by_symbol.get(valid_trade.symbol) is None:
                 grouped_by_symbol[valid_trade.symbol] = []
             grouped_by_symbol[valid_trade.symbol].append(valid_trade)
             if valid_trade.quantity > 0:
-                spent_buy += trade.price * trade.quantity
+                spent_buy += valid_trade.price * valid_trade.quantity
             else:
-                spent_sell += -trade.price * trade.quantity
+                spent_sell += -valid_trade.price * valid_trade.quantity
 
             new_credit, profit = calculate_credit_and_profit(valid_trade,
                                                              position[valid_trade.symbol],
@@ -236,12 +233,14 @@ def trades_position_pnl_run(
                                                                  valid_trade.symbol])
             profits_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] += profit
             credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] = new_credit
-            position[trade.symbol] += valid_trade.quantity
-        # print(f"time: {time}, position: {position}")
-        # print("valid trades")
-        # for trade in valid_trades:
-            # print(trade.__dict__)
-        if states.get(time + FLEX_TIME_DELTA) != None:
+            position[valid_trade.symbol] += valid_trade.quantity
+            if abs(position[valid_trade.symbol]) > current_limits[valid_trade.symbol]:
+                # should not happen, but still:
+                print(
+                    f'Position is not zero: {position[valid_trade.symbol]}, illegal trade: {valid_trade.__dict__}, time: {time}')
+                raise ValueError('Position is not zero')
+
+        if states.get(time + FLEX_TIME_DELTA) is not None:
             states[time + FLEX_TIME_DELTA].own_trades = grouped_by_symbol
         for psymbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
             unrealized_by_symbol[time + FLEX_TIME_DELTA][psymbol] = mids[psymbol] * position[
@@ -281,7 +280,8 @@ def cleanup_order_volumes(org_orders: List[Order]) -> List[Order]:
         final_order = copy.copy(order_1)
         for order_2 in org_orders:
             if order_1.price == order_2.price and order_1.quantity == order_2.quantity:
-                continue
+                continue  # should it even skip it??
+                # TODO: check this on site !
             if order_1.price == order_2.price:
                 final_order.quantity += order_2.quantity
         orders.append(final_order)
@@ -289,69 +289,82 @@ def cleanup_order_volumes(org_orders: List[Order]) -> List[Order]:
 
 
 def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[str, OrderDepth],
-                     time: int, halfway: bool) -> list[Trade]:
+                     time: int, position: dict[str, int]) -> list[Trade]:
     trades = []
     for symbol in trader_orders.keys():
-        if order_depth.get(symbol) != None:
-            symbol_order_depth = copy.deepcopy(order_depth[symbol])
-            t_orders = cleanup_order_volumes(trader_orders[symbol])
-            for order in t_orders:
-                if order.quantity < 0:
-                    if halfway:
-                        bids = symbol_order_depth.buy_orders.keys()
-                        asks = symbol_order_depth.sell_orders.keys()
-                        max_bid = max(bids)
-                        min_ask = min(asks)
-                        if order.price <= statistics.median([max_bid, min_ask]):
-                            trades.append(
-                                Trade(symbol, order.price, order.quantity, "BOT", "YOU", time))
-                    # else:
-                    # print(f'No matches for order {order} at time {time}')
-                    # print(f'Order depth is {order_depth[order.symbol].__dict__}')
+        if order_depth.get(symbol) is None:
+            continue
+        symbol_order_depth = copy.deepcopy(order_depth[symbol])
+        t_orders = cleanup_order_volumes(trader_orders[symbol])
+
+        for order in t_orders:
+            if order.quantity < 0:
+                # selling
+
+                pos = position[symbol] if symbol in position else 0
+                order_cp = copy.deepcopy(order)
+                # print(f"order: {order_cp.quantity} for {order_cp.price}, position: {pos}")
+                while order_cp.quantity < 0:
+                    potential_matches = list(filter(lambda o: o[0] >= order_cp.price,
+                                                    symbol_order_depth.buy_orders.items()))
+                    # o[0] - the price they are willing to pay
+                    # order.price - the price we are willing to get
+                    # if they are willing to pay more than we are willing to get we take it
+
+                    if len(potential_matches) == 0:
+                        break
+
+                    # print(f"potential_matches: {potential_matches}")
+                    match = potential_matches[0]
+                    if abs(match[1]) > abs(order_cp.quantity):
+                        final_volume = order_cp.quantity
                     else:
-                        potential_matches = list(filter(lambda o: o[0] == order.price,
-                                                        symbol_order_depth.buy_orders.items()))
-                        if len(potential_matches) > 0:
-                            match = potential_matches[0]
-                            final_volume = 0
-                            if abs(match[1]) > abs(order.quantity):
-                                final_volume = order.quantity
-                            else:
-                                # this should be negative
-                                final_volume = -match[1]
-                            trades.append(
-                                Trade(symbol, order.price, final_volume, "BOT", "YOU", time))
-                    # else:
-                    # print(f'No matches for order {order} at time {time}')
-                    # print(f'Order depth is {order_depth[order.symbol].__dict__}')
-                if order.quantity > 0:
-                    if halfway:
-                        bids = symbol_order_depth.buy_orders.keys()
-                        asks = symbol_order_depth.sell_orders.keys()
-                        max_bid = max(bids)
-                        min_ask = min(asks)
-                        if order.price >= statistics.median([max_bid, min_ask]):
-                            trades.append(
-                                Trade(symbol, order.price, order.quantity, "YOU", "BOT", time))
-                    # else:
-                    #     print(f'No matches for order {order} at time {time}')
-                    #     print(f'Order depth is {order_depth[order.symbol].__dict__}')
+                        # this should be negative
+                        final_volume = -match[1]
+
+                    max_volume_pos = -current_limits[symbol] - pos
+                    final_volume = max(final_volume, max_volume_pos)
+                    pos += final_volume
+
+                    trades.append(
+                        Trade(symbol, match[0], final_volume, "BOT", "YOU", time))
+                    # print(f"    trade: {final_volume} for {match[0]}, position: {pos}")
+                    order_cp.quantity -= final_volume
+                    symbol_order_depth.buy_orders[match[0]] += final_volume
+                    if symbol_order_depth.buy_orders[match[0]] == 0:
+                        symbol_order_depth.buy_orders.pop(match[0])
+
+            if order.quantity > 0:
+                # buying
+
+                pos = position[symbol] if symbol in position else 0
+                order_cp = copy.deepcopy(order)
+                # print(f"order: {order_cp.quantity} for {order_cp.price}, position: {pos}")
+                while order_cp.quantity > 0:
+                    potential_matches = list(filter(lambda o: o[0] <= order.price,
+                                                    symbol_order_depth.sell_orders.items()))
+                    if len(potential_matches) == 0:
+                        break
+                    # print(f"potential_matches: {potential_matches}")
+                    match = potential_matches[0]
+                    # Match[1] will be negative so needs to be changed to work here
+                    if abs(match[1]) > abs(order.quantity):
+                        final_volume = order.quantity
                     else:
-                        potential_matches = list(filter(lambda o: o[0] == order.price,
-                                                        symbol_order_depth.sell_orders.items()))
-                        if len(potential_matches) > 0:
-                            match = potential_matches[0]
-                            final_volume = 0
-                            # Match[1] will be negative so needs to be changed to work here
-                            if abs(match[1]) > abs(order.quantity):
-                                final_volume = order.quantity
-                            else:
-                                final_volume = abs(match[1])
-                            trades.append(
-                                Trade(symbol, order.price, final_volume, "YOU", "BOT", time))
-                    # else:
-                    #     print(f'No matches for order {order} at time {time}')
-                    #     print(f'Order depth is {order_depth[order.symbol].__dict__}')
+                        final_volume = abs(match[1])
+                    trades.append(
+                        Trade(symbol, match[0], final_volume, "YOU", "BOT", time))
+
+                    max_volume_pos = current_limits[symbol] - pos
+                    final_volume = min(final_volume, max_volume_pos)
+                    pos += final_volume
+
+                    # print(f"    trade: {final_volume} for {match[0]}, position: {pos}")
+                    order_cp.quantity -= final_volume
+                    symbol_order_depth.sell_orders[match[0]] += final_volume
+                    if symbol_order_depth.sell_orders[match[0]] == 0:
+                        symbol_order_depth.sell_orders.pop(match[0])
+
     return trades
 
 

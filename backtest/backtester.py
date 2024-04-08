@@ -11,7 +11,7 @@ from datetime import datetime
 
 from consts import *
 
-from vladbot1 import Trader
+from stupidon import Trader
 from backtester_logic import simulate_alternative
 
 import time
@@ -28,13 +28,9 @@ if __name__ == "__main__":
     names = True
     if 'n' in names_in:
         names = False
-    halfway_in = "n"  # input("Matching orders halfway (default: n) (y/n): ")
-    halfway = False
-    if 'y' in halfway_in:
-        halfway = True
 
     for day in range(-2, 1):
-        # day = -2
+    # day = -2
         print(f"Running simulation on round {round_} day {day} for time {max_time}")
-        profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, verbose=False, plotting=False, logging=False)
+        profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
         print(f"profits: {profits}")
