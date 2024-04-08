@@ -41,8 +41,8 @@ def objective_function(trial):
 
     curr_trader = Trader(buy_margin=buy_margin, sell_margin=sell_margin, time_window=time_window)
 
-    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, df_trades=df_trades,
-                                   df_prices=df_prices, verbose=False, plotting=False, logging=False)
+    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, df_trades=df_trades.copy(),
+                                   df_prices=df_prices.copy(), verbose=False, plotting=False, logging=False)
 
     # profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway,
     #                                verbose=False, plotting=False, logging=False)
@@ -61,8 +61,11 @@ if __name__ == "__main__":
     n_jobs = 8
     study.optimize(objective_function, n_trials=100, n_jobs=n_jobs, show_progress_bar=True)
 
-    print(f"Best parameters: {study.best_params}")
-
-    trader = Trader(**study.best_params, verbose=True)
+    trader = Trader(**study.best_params, verbose=False)
     profits = simulate_alternative(round_, day, trader, max_time, names, halfway=halfway)
     print(f"Profits: {profits}")
+
+    print(f"Best parameters: {study.best_params}")
+    # {'buy_margin': 0.7850037515086065, 'sell_margin': 0.6388820974848624, 'time_window': 6.469020211030575}
+    # {'buy_margin': 8.62918163605573, 'sell_margin': 5.470549505892109, 'time_window': 3.6582073498143353}
+

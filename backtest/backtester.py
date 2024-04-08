@@ -22,7 +22,7 @@ if __name__ == "__main__":
     max_time = 9  # int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
     if max_time < 10:
         max_time *= 100000
-    round_ = 0  # int(input("Input a round (blank for 4): ") or 4)
+    round_ = 1  # int(input("Input a round (blank for 4): ") or 4)
     day = -2  # int(input("Input a day (blank for random): ") or random.randint(1, 3))
     names_in = "n"  # input("With bot names (default: y) (y/n): ")
     names = True
@@ -34,25 +34,6 @@ if __name__ == "__main__":
         halfway = True
     print(f"Running simulation on round {round_} day {day} for time {max_time}")
 
-    prices_path = os.path.join(TRAINING_DATA_PREFIX, f'prices_round_{round_}_day_{day}.csv')
-    df_prices = pd.read_csv(prices_path, sep=';')
-    trades_path = os.path.join(TRAINING_DATA_PREFIX, f'trades_round_{round_}_day_{day}_wn.csv')
-    if not names:
-        trades_path = os.path.join(TRAINING_DATA_PREFIX, f'trades_round_{round_}_day_{day}_nn.csv')
-    df_trades = pd.read_csv(trades_path, sep=';', dtype={'seller': str, 'buyer': str})
-
-    # get the time it took to run the simulation
-    start_time = time.time()
-
-    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway,
-                                   df_trades=df_trades, df_prices=df_prices,
-                                   verbose=False, plotting=False, logging=False)
-    end_time = time.time()
-    print(f"Time taken: {end_time - start_time}")
-
-    start_time = time.time()
-    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, plotting=False)
-    end_time = time.time()
-    print(f"Time taken: {end_time - start_time}")
+    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, plotting=True)
 
     print(f"profits: {profits}")

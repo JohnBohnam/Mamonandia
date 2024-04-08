@@ -169,7 +169,7 @@ def simulate_alternative(
         plotter.plot_stats()
     res = {}
     for symbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
-        res[symbol] = profits_by_symbol[max_time][symbol]  # + balance_by_symbol[max_time][symbol] ??
+        res[symbol] = profits_by_symbol[max_time][symbol] + balance_by_symbol[max_time][symbol] # ??
     return res
 
 

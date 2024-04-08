@@ -16,7 +16,7 @@ class Trader:
         for key, value in params.items():
             setattr(self, key, value)
 
-    def __init__(self, buy_margin=5, sell_margin=5, time_window=2, verbose=False):
+    def __init__(self, buy_margin=6, sell_margin=5, time_window=2, verbose=False):
         self.bullshit = 0
         self.limit_hits_up = {}
         self.limit_hits_down = {}
@@ -28,17 +28,18 @@ class Trader:
         # print(f"buy_margin: {buy_margin}, sell_margin: {sell_margin}, time_window: {time_window}")
 
         # the bigger the time window, the more conservative the trader
-        # self.time_window = time_window
+        self.time_window = time_window
 
         # the lesser the margin, the more aggressive the trader
-        # self.buy_margin = buy_margin
-        # self.sell_margin = sell_margin
+        self.buy_margin = buy_margin
+        self.sell_margin = sell_margin
 
         self.verbose = verbose
 
+        # these are the stupid prams that make stupid profits
         self.set_params(**{'buy_margin': 0.7850037515086065, 'sell_margin': 0.6388820974848624, 'time_window': 6.469020211030575})
 
-        self.products = ["STARFRUIT"]
+        self.products = ["STARFRUIT", "AMETHYSTS"]
 
         for product in self.products:
             self.limit_hits_up[product] = 0
@@ -75,8 +76,64 @@ class Trader:
         if len(self.prev_asks) > self.time_window:
             self.prev_asks.pop(0)
 
-    def run(self, state: TradingState):
+    def order_starfruit(self, state: TradingState) -> list[Order]:
+        orders = []
         product = "STARFRUIT"
+        if product not in state.order_depths:
+            return orders
+
+        pos = state.position[product] if product in state.position else 0
+
+        if self.prev_bids:
+            sell_for = int(np.min(self.prev_bids) + self.sell_margin)
+            orders.append(Order(product, sell_for, -20 - pos))
+            if self.verbose:
+                print(f"pos: {pos}, selling {-20 - pos} of {product} for {sell_for}")
+
+        if self.prev_asks:
+            buy_for = int(np.max(self.prev_asks) - self.buy_margin)
+            orders.append(Order(product, buy_for, 20 - pos))
+            if self.verbose:
+                print(f"pos: {pos}, buying {20 - pos} of {product} for {buy_for}")
+
+        return orders
+
+    def order_amethysts(self, state: TradingState) -> list[Order]:
+        product = "AMETHYSTS"
+        amethyst_price = 10000  # fair price
+        amethyst_buy = 9999  # max price that we want to pay to buy
+        amethyst_sell = 10001  # minimal price that we want to sell
+
+        orders = []
+        if product not in state.order_depths:
+            return orders
+
+        order_depth: OrderDepth = state.order_depths[product]
+        pos = 0
+        if product in state.position:
+            pos = state.position[product]
+
+        if len(order_depth.sell_orders) != 0:
+            best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]  # sorted
+            if int(best_ask) < amethyst_price:  # if best ask price is lower than fair we want to buy
+                if pos < 20:  # check if we are full
+                    buy_amount = 20 - pos  # max that we can buy
+                    orders.append(Order(product, amethyst_buy, buy_amount))  # buy order
+            elif pos < 0:  # if we are short on amethyst we want to buy at fair price
+                orders.append(Order(product, amethyst_price, -pos))  # buy
+
+        if len(order_depth.buy_orders) != 0:
+            best_bid, best_bid_amount = list(order_depth.buy_orders.items())[0]
+            if int(best_bid) > amethyst_price:  # if best bid price is higer than fair we want to sell
+                if pos > -20:  # check if we are full
+                    sell_amount = -20 - pos
+                    orders.append(Order(product, amethyst_sell, sell_amount))  # sell
+            elif pos > 0:  # if we have amethyst we want to sell at fair price
+                orders.append(Order(product, amethyst_price, -pos))  # sell
+
+        return orders
+
+    def run(self, state: TradingState):
 
         self.runs += 1
         # print(f"limits up: {self.limit_hits_up}, limits down: {self.limit_hits_down}\n")
@@ -89,30 +146,12 @@ class Trader:
                 self.limit_hits_down[product] += 1
 
         result = {}
-        if product not in state.order_depths:
-            return result, 0, ""
+        result["STARFRUIT"] = self.order_starfruit(state)
+        result["AMETHYSTS"] = self.order_amethysts(state)
 
-        orders = []
-        pos = position[product] if product in position else 0
+        # print(result)
 
-        # print(f"prev bids: {self.prev_bids}")
-        # print(f"prev asks: {self.prev_asks}")
-
-        if self.prev_bids:
-            sell_for = int(np.min(self.prev_bids) + self.sell_margin)
-            orders.append(Order(product, sell_for, -20-pos))
-            if self.verbose:
-                print(f"pos: {pos}, selling {-20-pos} of {product} for {sell_for}")
-
-        if self.prev_asks:
-            buy_for = int(np.max(self.prev_asks) - self.buy_margin)
-            orders.append(Order(product, buy_for, 20-pos))
-            if self.verbose:
-                print(f"pos: {pos}, buying {20-pos} of {product} for {buy_for}")
-
-        result[product] = orders
-
-        self.update_prevs(product, state)
+        self.update_prevs("STARFRUIT", state)
 
         return result, 0, ""
 

@@ -4,7 +4,8 @@ TIME_DELTA = 100
 old = False
 # Please put all! the price and log files into
 # the same directory or adjust the code accordingly
-TRAINING_DATA_PREFIX = "./training"
+# TRAINING_DATA_PREFIX = "./training"
+TRAINING_DATA_PREFIX = "./new_data"
 if old:
     current_limits = {
         'PEARLS': 20,
