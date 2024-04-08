@@ -36,5 +36,5 @@ if __name__ == "__main__":
     # for day in range(-2, 1):
     day = -2
     print(f"Running simulation on round {round_} day {day} for time {max_time}")
-    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, verbose=False, plotting=False, logging=False)
+    profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, verbose=True, plotting=False, logging=False)
     print(f"profits: {profits}")
