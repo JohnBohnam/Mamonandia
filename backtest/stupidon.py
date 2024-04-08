@@ -37,7 +37,7 @@ class Trader:
         self.verbose = verbose
 
         # these are the stupid prams that make stupid profits
-        self.set_params(**{'buy_margin': 0.7850037515086065, 'sell_margin': 0.6388820974848624, 'time_window': 6.469020211030575})
+        # self.set_params(**{'buy_margin': 0.7850037515086065, 'sell_margin': 0.6388820974848624, 'time_window': 6.469020211030575})
 
         self.products = ["STARFRUIT", "AMETHYSTS"]
 
@@ -108,29 +108,17 @@ class Trader:
         if product not in state.order_depths:
             return orders
 
-        order_depth: OrderDepth = state.order_depths[product]
+        # order_depth: OrderDepth = state.order_depths[product]
         pos = 0
         if product in state.position:
             pos = state.position[product]
 
-        if len(order_depth.sell_orders) != 0:
-            best_ask, best_ask_amount = list(order_depth.sell_orders.items())[0]  # sorted
-            if int(best_ask) < amethyst_price:  # if best ask price is lower than fair we want to buy
-                if pos < 20:  # check if we are full
-                    buy_amount = 20 - pos  # max that we can buy
-                    orders.append(Order(product, amethyst_buy, buy_amount))  # buy order
-            elif pos < 0:  # if we are short on amethyst we want to buy at fair price
-                orders.append(Order(product, amethyst_price, -pos))  # buy
+        orders.append(Order(product, amethyst_buy, 20 - pos))
+        orders.append(Order(product, amethyst_sell, -20 - pos))
 
-        if len(order_depth.buy_orders) != 0:
-            best_bid, best_bid_amount = list(order_depth.buy_orders.items())[0]
-            if int(best_bid) > amethyst_price:  # if best bid price is higer than fair we want to sell
-                if pos > -20:  # check if we are full
-                    sell_amount = -20 - pos
-                    orders.append(Order(product, amethyst_sell, sell_amount))  # sell
-            elif pos > 0:  # if we have amethyst we want to sell at fair price
-                orders.append(Order(product, amethyst_price, -pos))  # sell
-
+        if orders:
+            if self.verbose:
+                print(f"orders for {product}: {orders}")
         return orders
 
     def run(self, state: TradingState):
@@ -145,11 +133,9 @@ class Trader:
             elif product in position and position[product] == -self.limits[product]:
                 self.limit_hits_down[product] += 1
 
-        result = {}
-        result["STARFRUIT"] = self.order_starfruit(state)
-        result["AMETHYSTS"] = self.order_amethysts(state)
+        result = {"STARFRUIT": self.order_starfruit(state), "AMETHYSTS": self.order_amethysts(state)}
 
-        # print(result)
+        # print(result["AMETHYSTS"])
 
         self.update_prevs("STARFRUIT", state)
 

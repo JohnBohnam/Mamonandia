@@ -237,10 +237,10 @@ def trades_position_pnl_run(
             profits_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] += profit
             credit_by_symbol[time + FLEX_TIME_DELTA][valid_trade.symbol] = new_credit
             position[trade.symbol] += valid_trade.quantity
-        print(f"time: {time}, position: {position}")
-        print("valid trades")
-        for trade in valid_trades:
-            print(trade.__dict__)
+        # print(f"time: {time}, position: {position}")
+        # print("valid trades")
+        # for trade in valid_trades:
+            # print(trade.__dict__)
         if states.get(time + FLEX_TIME_DELTA) != None:
             states[time + FLEX_TIME_DELTA].own_trades = grouped_by_symbol
         for psymbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
