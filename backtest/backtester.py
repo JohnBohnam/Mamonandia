@@ -11,7 +11,8 @@ from datetime import datetime
 
 from consts import *
 
-from vladbot1 import Trader
+# from vladbot1 import Trader
+from research.bot_with_exercised_trades import Trader
 from backtester_logic import simulate_alternative
 
 import time
@@ -19,7 +20,7 @@ import time
 # Adjust accordingly the round and day to your needs
 if __name__ == "__main__":
     curr_trader = Trader(verbose=False)
-    max_time = 9  # int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
+    max_time = 1  # int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
     if max_time < 10:
         max_time *= 100000
     round_ = 1  # int(input("Input a round (blank for 4): ") or 4)
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     if 'y' in halfway_in:
         halfway = True
 
-    for day in range(-2, 1):
+    for day in range(0, 1):
         # day = -2
         print(f"Running simulation on round {round_} day {day} for time {max_time}")
         profits = simulate_alternative(round_, day, curr_trader, max_time, names, halfway=halfway, verbose=False, plotting=False, logging=False)
