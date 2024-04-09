@@ -108,7 +108,6 @@ class Trader:
         if product not in state.order_depths:
             return orders
 
-        # order_depth: OrderDepth = state.order_depths[product]
         pos = 0
         if product in state.position:
             pos = state.position[product]

@@ -20,8 +20,8 @@ class Trader:
         self.prev_price = None
         self.last_bid = None
         self.last_ask = None
-        # self.mode = "site"
-        self.mode = "local"
+        self.mode = "site"
+        # self.mode = "local"
 
         self.magic_number = -0.45559303
 
