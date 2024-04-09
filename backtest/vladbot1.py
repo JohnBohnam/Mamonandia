@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from datamodel import OrderDepth, TradingState, Order
 import numpy as np
@@ -9,6 +9,35 @@ def get_mid_price(od: OrderDepth):
         return None
     # is this how it`s done?
     return (min(od.buy_orders.keys()) + max(od.sell_orders.keys())) // 2
+
+
+def get_trader_volume(buy_orders: Dict[int, int], sell_orders: Dict[int, int], price):
+    buy_volume = 0
+    for bid_price, volume in buy_orders.items():
+        if bid_price >= price:
+            buy_volume += volume
+    sell_volume = 0
+    for ask_price, volume in sell_orders.items():
+        if ask_price <= price:
+            sell_volume += volume
+    return min(buy_volume, sell_volume)
+
+
+def fit_price(buy_orders: Dict[int, int], sell_orders: Dict[int, int]):
+    if not buy_orders or not sell_orders:
+        return None
+
+    min_bid = min(buy_orders.keys())
+    max_ask = max(sell_orders.keys())
+
+    best_fit_price = None
+    best_fit = 0
+    for price in range(min_bid, max_ask):
+        curr_fit = get_trader_volume(buy_orders, sell_orders, price)
+        if curr_fit > best_fit:
+            best_fit = curr_fit
+            best_fit_price = price
+    return best_fit_price
 
 
 class Trader:
