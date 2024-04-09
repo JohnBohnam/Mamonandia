@@ -29,8 +29,14 @@ if __name__ == "__main__":
     if 'n' in names_in:
         names = False
 
-    for day in range(-2, 1):
-    # day = -2
-        print(f"Running simulation on round {round_} day {day} for time {max_time}")
-        profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
-        print(f"profits: {profits}")
+    # for day in range(-2, 1):
+    # # day = -2
+    #     print(f"Running simulation on round {round_} day {day} for time {max_time}")
+    #     profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
+    #     print(f"profits: {profits}")
+    day = 0
+    max_time = 999000-100
+    print(f"Running simulation on round {round_} day {day} for time {max_time}")
+    profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
+    print(f"profits: {profits}")
+
