@@ -52,15 +52,21 @@ class Trader:
 
         if self.prev_mids:
             fair_price = int(np.median(self.prev_mids))
-            sell_for = int(fair_price + self.sell_margin)
-            orders.append(Order(product, sell_for, -20 - pos))
-            if self.verbose:
-                print(f"pos: {pos}, selling {-20 - pos} of {product} for {sell_for}")
+            sell_for = int(fair_price + self.sell_margin -pos/10)
+            buy_orders = state.order_depths[product].buy_orders
+            q = sum([quantity for price, quantity in buy_orders.items() if price > fair_price])
+            q = max(-q, -20-pos)
+            orders.append(Order(product, sell_for, q))
+            if self.verbose and q!=0:
+                print(f"time {state.timestamp} pos: {pos}, selling {q} of {product} for {sell_for} buy orders: {buy_orders}")
 
-            buy_for = int(fair_price - self.buy_margin)
-            orders.append(Order(product, buy_for, 20 - pos))
-            if self.verbose:
-                print(f"pos: {pos}, buying {20 - pos} of {product} for {buy_for}")
+            buy_for = int(fair_price - self.buy_margin - pos/10)
+            sell_orders = state.order_depths[product].sell_orders
+            q = sum([-quantity for price, quantity in sell_orders.items() if price < fair_price])
+            q = min(q, 20-pos)
+            orders.append(Order(product, buy_for, q))
+            if self.verbose and q!=0:
+                print(f"time {state.timestamp}, pos: {pos}, buying {q} of {product} for {buy_for}")
 
         return orders
 
