@@ -1,5 +1,5 @@
-# import sys
-# sys.path.append("..")
+import sys
+sys.path.append("..")
 
 from traders.stupidon import Trader
 # from bot_with_exercised_trades import Trader
@@ -28,6 +28,6 @@ if __name__ == "__main__":
     day = 0
     max_time = 999000-100
     print(f"Running simulation on round {round_} day {day} for time {max_time}")
-    profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
+    profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=True, logging=False)
     print(f"profits: {profits}")
 

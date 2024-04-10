@@ -142,9 +142,14 @@ def simulate_alternative(
     profits_by_symbol: dict[int, dict[str, float]] = {
         0: dict(zip(ref_symbols, [0.0] * len(ref_symbols)))
     }
-    balance_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
-    credit_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
-    unrealized_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
+    # balance_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
+    # credit_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
+    # unrealized_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
+
+    balance_by_symbol: dict[int, dict[str, float]] = {0: profits_by_symbol[0]}
+    credit_by_symbol: dict[int, dict[str, float]] = {0: profits_by_symbol[0]}
+    unrealized_by_symbol: dict[int, dict[str, float]] = {0: profits_by_symbol[0]}
+
 
     states, profits_by_symbol, balance_by_symbol = trades_position_pnl_run(states, max_time, trader,
                                                                            profits_by_symbol,
@@ -280,7 +285,7 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
         # t_orders = cleanup_order_volumes(trader_orders[symbol])
         t_orders = trader_orders[symbol]
 
-        pos = copy.copy(position[symbol]) if symbol in position else 0
+        pos = position[symbol] if symbol in position else 0
         for order in t_orders:
             order_cp = copy.deepcopy(order)
             # print(f"order: {order_cp.quantity} for {order_cp.price}, position: {pos}")
