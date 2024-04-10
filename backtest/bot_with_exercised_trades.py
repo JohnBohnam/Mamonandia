@@ -12,23 +12,32 @@ def get_traded_volume(buy_orders: Dict[int, int], sell_orders: Dict[int, int], p
     for ask_price, volume in sell_orders.items():
         if ask_price <= price:
             sell_volume -= volume
-    return min(buy_volume, sell_volume)
+    return buy_volume, sell_volume
 
 
 def get_fit_price(buy_orders: Dict[int, int], sell_orders: Dict[int, int]):
     if not buy_orders or not sell_orders:
         return None
+    
+    potential_prices =sorted( list(buy_orders.keys()) + list(sell_orders.keys()))
 
-    min_bid = int(min(buy_orders.keys()))
-    max_ask = int(max(sell_orders.keys()))
-
+    
     best_fit_price = None
-    best_fit = 0
-    for price in range(min_bid, max_ask):
-        curr_fit = get_traded_volume(buy_orders, sell_orders, price)
-        if curr_fit > best_fit:
-            best_fit = curr_fit
+    best_size = 0
+    best_diff = 0
+    count = 1
+    for price in potential_prices:
+        buy_size, sell_size = get_traded_volume(buy_orders, sell_orders, price)
+        curr_size = min(buy_size, sell_size)
+        curr_diff = abs(buy_size - sell_size)
+        if curr_size > best_size or (curr_size == best_size and curr_diff < best_diff):
+            best_size = curr_size
+            best_diff = curr_diff
             best_fit_price = price
+            count = 1
+        elif curr_size == best_size and curr_diff == best_diff:
+            best_fit_price = (best_fit_price * count + price) / (count + 1)
+            count += 1
     return best_fit_price
 
 
@@ -41,8 +50,8 @@ class Trader:
         self.runs = 0
 
         self.prev_mids = []
-        self.buy_margin = int(sell_margin)
-        self.sell_margin = int(buy_margin)
+        self.buy_margin = int(buy_margin)
+        self.sell_margin = int(sell_margin)
         self.time_window = int(time_window)
 
         self.verbose = verbose
@@ -88,15 +97,19 @@ class Trader:
         buy_orders, sell_orders = self.get_historical_trades_for_stairfruit()
         fit_price = get_fit_price(buy_orders, sell_orders)
         pos = state.position["STARFRUIT"] if "STARFRUIT" in state.position else 0
+        if int(state.timestamp)==738300:
+            print("backtest_point")
         if fit_price:
             sell_for = int(fit_price + self.sell_margin)
             result["STARFRUIT"].append(Order("STARFRUIT", sell_for, -20 - pos))
             if self.verbose:
+                print("time", state.timestamp)
                 print(f"pos: {pos}, selling {-20 - pos} of STARFRUIT for {sell_for}")
 
             buy_for = int(fit_price - self.buy_margin)
             result["STARFRUIT"].append(Order("STARFRUIT", buy_for, 20 - pos))
             if self.verbose:
+                print("time", state.timestamp)
                 print(f"pos: {pos}, buying {20 - pos} of STARFRUIT for {buy_for}")
 
         return result, 0, ""

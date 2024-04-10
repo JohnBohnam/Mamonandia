@@ -146,7 +146,7 @@ def simulate_alternative(
     credit_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
     unrealized_by_symbol: dict[int, dict[str, float]] = {0: copy.deepcopy(profits_by_symbol[0])}
 
-    states, profits_by_symbol, balance_by_symbol = trades_position_pnl_run(states, max_time, trader,
+    states, profits_by_symbol, balance_by_symbol, trader_orders = trades_position_pnl_run(states, max_time, trader,
                                                                            profits_by_symbol,
                                                                            balance_by_symbol,
                                                                            credit_by_symbol,
@@ -162,6 +162,7 @@ def simulate_alternative(
             "profits_by_symbol": profits_by_symbol,
             "balance_by_symbol": balance_by_symbol,
             "old": old,
+            "trader_orders": trader_orders,
         }
         plotter = Plotter(SYMBOLS_BY_ROUND_POSITIONABLE[round_], **kwargs)
         plotter.plot_stats()
@@ -186,12 +187,14 @@ def trades_position_pnl_run(
 ):
     spent_buy = 0  # variable is useless, only double check the profits in the end
     spent_sell = 0
+    trader_orders = {}
     for time, state in states.items():
         position = copy.deepcopy(state.position)
         if old:
             orders = trader.run(state)
         else:
             orders, _, _ = trader.run(state)
+        trader_orders[time] = orders
         trades = clear_order_book(orders, state.order_depths, time, position)
         mids = calc_mid(states, round_, time, max_time)
         if time != max_time:
@@ -273,7 +276,7 @@ def trades_position_pnl_run(
     if verbose:
         print(
             f"spent_buy: {spent_buy}, spent_sell: {spent_sell}, spent_sell - spent_buy: {spent_sell - spent_buy}")
-    return states, profits_by_symbol, balance_by_symbol
+    return states, profits_by_symbol, balance_by_symbol, trader_orders
 
 
 def cleanup_order_volumes(org_orders: List[Order]) -> List[Order]:
