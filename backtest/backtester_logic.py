@@ -168,7 +168,7 @@ def simulate_alternative(
     res = {}
     for symbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
         # res[symbol] = profits_by_symbol[max_time][symbol] # + balance_by_symbol[max_time][symbol]  # ??
-        print(balance_by_symbol[max_time][symbol])
+        # print(balance_by_symbol[max_time][symbol])
         res[symbol] = profits_by_symbol[max_time][symbol] + balance_by_symbol[max_time][symbol]  # ??
     return res
 
@@ -209,8 +209,8 @@ def trades_position_pnl_run(
         if time == max_time:
             FLEX_TIME_DELTA = 0
         for valid_trade in valid_trades:
-            print(f'considering trade: {valid_trade.quantity} for {valid_trade.price} at time {time}')
-            print(f'position: {position[valid_trade.symbol]}')
+            # print(f'considering trade: {valid_trade.quantity} for {valid_trade.price} at time {time}')
+            # print(f'position: {position[valid_trade.symbol]}')
 
             if grouped_by_symbol.get(valid_trade.symbol) is None:
                 grouped_by_symbol[valid_trade.symbol] = []
