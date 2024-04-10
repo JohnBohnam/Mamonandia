@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from datamodel import OrderDepth, TradingState, Order, Time
+from research.datamodel import OrderDepth, TradingState, Order, Time
 
 
 def get_traded_volume(buy_orders: Dict[int, int], sell_orders: Dict[int, int], price):

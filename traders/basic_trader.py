@@ -1,9 +1,8 @@
-from datamodel import OrderDepth, UserId, TradingState, Order
+from research.datamodel import OrderDepth, TradingState, Order
 from typing import List
 import json
-import string
 
-from dontlooseshells_algo import Logger
+from traders.dontlooseshells_algo import Logger
 
 
 class Trader:

@@ -1,10 +1,8 @@
-import pdb
 from typing import Dict, List
 
-from datamodel import OrderDepth, TradingState, Order
-import numpy as np
+from research.datamodel import OrderDepth, TradingState, Order
 
-from dontlooseshells_algo import Logger
+from traders.dontlooseshells_algo import Logger
 
 
 class Trader:

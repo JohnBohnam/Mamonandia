@@ -9,7 +9,7 @@ import os
 from consts import *
 
 # from Strategy2023.trader import Trader
-from stupidon import Trader
+from traders.stupidon import Trader
 from backtester_logging import create_log_file
 
 
@@ -169,7 +169,7 @@ def simulate_alternative(
     res = {}
     for symbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
         # res[symbol] = profits_by_symbol[max_time][symbol] # + balance_by_symbol[max_time][symbol]  # ??
-        print(balance_by_symbol[max_time][symbol])
+        # print(balance_by_symbol[max_time][symbol])
         res[symbol] = profits_by_symbol[max_time][symbol] + balance_by_symbol[max_time][symbol]  # ??
     return res
 
@@ -205,24 +205,16 @@ def trades_position_pnl_run(
             for psymbol in SYMBOLS_BY_ROUND_POSITIONABLE[round_]:
                 unrealized_by_symbol[time + TIME_DELTA][psymbol] = mids[psymbol] * position[psymbol]
 
-        valid_trades = []
+        valid_trades = trades
         grouped_by_symbol = {}
-        if len(trades) > 0:
-            for trade in trades:
-                n_position = position[trade.symbol] + trade.quantity
-                if abs(n_position) > current_limits[trade.symbol]:
-                    if verbose:
-                        print(trade.__dict__)
-                        raise ValueError(
-                            'ILLEGAL TRADE, WOULD EXCEED POSITION LIMIT, KILLING ALL REMAINING ORDERS')
-
-                else:
-                    valid_trades.append(trade)
 
         FLEX_TIME_DELTA = TIME_DELTA
         if time == max_time:
             FLEX_TIME_DELTA = 0
         for valid_trade in valid_trades:
+            # print(f'considering trade: {valid_trade.quantity} for {valid_trade.price} at time {time}')
+            # print(f'position: {position[valid_trade.symbol]}')
+
             if grouped_by_symbol.get(valid_trade.symbol) is None:
                 grouped_by_symbol[valid_trade.symbol] = []
             grouped_by_symbol[valid_trade.symbol].append(valid_trade)
@@ -241,9 +233,11 @@ def trades_position_pnl_run(
             position[valid_trade.symbol] += valid_trade.quantity
             if abs(position[valid_trade.symbol]) > current_limits[valid_trade.symbol]:
                 # should not happen, but still:
+                trades_str = [str(x.quantity) + " for " + str(x.price) for x in valid_trades]
+                print(f"trades: {trades_str}")
                 print(
-                    f'Position is not zero: {position[valid_trade.symbol]}, illegal trade: {valid_trade.__dict__}, time: {time}')
-                raise ValueError('Position is not zero')
+                    f'Position limit exceeded: {position[valid_trade.symbol]}, illegal trade: {valid_trade.__dict__}, time: {time}')
+                raise ValueError('Position limit exceeded - backtester has a bug')
 
         if states.get(time + FLEX_TIME_DELTA) is not None:
             states[time + FLEX_TIME_DELTA].own_trades = grouped_by_symbol
@@ -268,7 +262,7 @@ def trades_position_pnl_run(
                 else:
                     spent_buy += -mids[osymbol] * position[osymbol]
 
-        if states.get(time + FLEX_TIME_DELTA) != None:
+        if states.get(time + FLEX_TIME_DELTA) is not None:
             states[time + FLEX_TIME_DELTA].position = copy.deepcopy(position)
         if verbose and trades:
             print(f'Trades at time {time}: {[x.__dict__ for x in trades]}')
@@ -279,20 +273,6 @@ def trades_position_pnl_run(
     return states, profits_by_symbol, balance_by_symbol, trader_orders
 
 
-def cleanup_order_volumes(org_orders: List[Order]) -> List[Order]:
-    orders = []
-    for order_1 in org_orders:
-        final_order = copy.copy(order_1)
-        for order_2 in org_orders:
-            if order_1.price == order_2.price and order_1.quantity == order_2.quantity:
-                continue  # should it even skip it??
-                # TODO: check this on site !
-            if order_1.price == order_2.price:
-                final_order.quantity += order_2.quantity
-        orders.append(final_order)
-    return orders
-
-
 def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[str, OrderDepth],
                      time: int, position: dict[str, int]) -> list[Trade]:
     trades = []
@@ -300,26 +280,22 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
         if order_depth.get(symbol) is None:
             continue
         symbol_order_depth = copy.deepcopy(order_depth[symbol])
-        t_orders = cleanup_order_volumes(trader_orders[symbol])
+        # t_orders = cleanup_order_volumes(trader_orders[symbol])
+        t_orders = trader_orders[symbol]
 
+        pos = copy.copy(position[symbol]) if symbol in position else 0
         for order in t_orders:
+            order_cp = copy.deepcopy(order)
+            # print(f"order: {order_cp.quantity} for {order_cp.price}, position: {pos}")
             if order.quantity < 0:
                 # selling
-
-                pos = position[symbol] if symbol in position else 0
-                order_cp = copy.deepcopy(order)
-                # print(f"order: {order_cp.quantity} for {order_cp.price}, position: {pos}")
                 while order_cp.quantity < 0:
                     potential_matches = list(filter(lambda o: o[0] >= order_cp.price,
                                                     symbol_order_depth.buy_orders.items()))
-                    # o[0] - the price they are willing to pay
-                    # order.price - the price we are willing to get
-                    # if they are willing to pay more than we are willing to get we take it
 
                     if len(potential_matches) == 0:
                         break
 
-                    # print(f"potential_matches: {potential_matches}")
                     match = potential_matches[0]
                     if abs(match[1]) > abs(order_cp.quantity):
                         final_volume = order_cp.quantity
@@ -331,8 +307,7 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
                     final_volume = max(final_volume, max_volume_pos)
                     pos += final_volume
 
-                    trades.append(
-                        Trade(symbol, match[0], final_volume, "BOT", "YOU", time))
+                    trades.append(Trade(symbol, match[0], final_volume, "BOT", "YOU", time))
                     # print(f"    trade: {final_volume} for {match[0]}, position: {pos}")
                     order_cp.quantity -= final_volume
                     symbol_order_depth.buy_orders[match[0]] += final_volume
@@ -341,27 +316,20 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
 
             if order.quantity > 0:
                 # buying
-
-                pos = position[symbol] if symbol in position else 0
-                order_cp = copy.deepcopy(order)
-                # print(f"order: {order_cp.quantity} for {order_cp.price}, position: {pos}")
                 while order_cp.quantity > 0:
                     potential_matches = list(filter(lambda o: o[0] <= order.price,
                                                     symbol_order_depth.sell_orders.items()))
                     if len(potential_matches) == 0:
                         break
-                    # print(f"potential_matches: {potential_matches}")
                     match = potential_matches[0]
-                    # Match[1] will be negative so needs to be changed to work here
                     if abs(match[1]) > abs(order.quantity):
                         final_volume = order.quantity
                     else:
                         final_volume = abs(match[1])
-                    trades.append(
-                        Trade(symbol, match[0], final_volume, "YOU", "BOT", time))
 
                     max_volume_pos = current_limits[symbol] - pos
                     final_volume = min(final_volume, max_volume_pos)
+                    trades.append(Trade(symbol, match[0], final_volume, "YOU", "BOT", time))
                     pos += final_volume
 
                     # print(f"    trade: {final_volume} for {match[0]}, position: {pos}")
@@ -369,7 +337,6 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
                     symbol_order_depth.sell_orders[match[0]] += final_volume
                     if symbol_order_depth.sell_orders[match[0]] == 0:
                         symbol_order_depth.sell_orders.pop(match[0])
-
     return trades
 
 

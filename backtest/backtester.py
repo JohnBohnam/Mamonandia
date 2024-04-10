@@ -1,17 +1,8 @@
-# from one_day_Trader import Trader
-from plotters import Plotter
-# from Strategy2023.trader import Trader
-from datamodel import *
-import pandas as pd
-import statistics
-import copy
-import uuid
-import os
-from datetime import datetime
+# import sys
+# sys.path.append("..")
 
-from consts import *
-
-from stupidon import Trader
+from traders.stupidon import Trader
+# from bot_with_exercised_trades import Trader
 from backtester_logic import simulate_alternative
 
 import time
