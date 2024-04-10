@@ -9,7 +9,7 @@ import os
 from consts import *
 
 # from Strategy2023.trader import Trader
-from stupidon import Trader
+from traders.stupidon import Trader
 from backtester_logging import create_log_file
 
 

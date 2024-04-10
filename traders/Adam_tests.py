@@ -1,6 +1,6 @@
 from typing import List
 
-from datamodel import OrderDepth, TradingState, Order
+from research.datamodel import OrderDepth, TradingState, Order
 
 
 class Trader:

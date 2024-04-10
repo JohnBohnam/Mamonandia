@@ -1,6 +1,4 @@
-from typing import List
-
-from datamodel import OrderDepth, TradingState, Order
+from research.datamodel import TradingState, Order
 import numpy as np
 
 

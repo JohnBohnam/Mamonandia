@@ -1,11 +1,9 @@
 from typing import Dict, List
 
-from backtest.dontlooseshells_algo import Logger
-from datamodel import OrderDepth, TradingState, Order
+from traders.dontlooseshells_algo import Logger
+from research.datamodel import OrderDepth, TradingState, Order
 import collections
 from collections import defaultdict
-import random
-import math
 import copy
 import numpy as np
 
