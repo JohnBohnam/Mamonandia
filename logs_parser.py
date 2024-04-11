@@ -63,8 +63,8 @@ def split_log_categories(filename):
 
 # Example usage (replace 'logs.txt' with your actual filename)
 if __name__ == '__main__':
-  folder = 'data/'
-  sandbox_logs, activities_logs, trade_history_logs = split_log_categories(os.path.join(folder, 'data_thief_logs.log'))
+  folder = 'backtest/logs/'
+  sandbox_logs, activities_logs, trade_history_logs = split_log_categories(os.path.join(folder, 'ffd2d68e-773b-4c9b-a943-5953c5d62acc.log'))
   
   print("Sandbox logs head:")
   sandbox_logs_df = pd.DataFrame(parse_multiline_json(sandbox_logs))
@@ -76,10 +76,10 @@ if __name__ == '__main__':
   column_names = activities_logs[0].split(';')
   activities_df = pd.DataFrame(data_list, columns=column_names)
   print(activities_df.head())
-  activities_df.to_csv(os.path.join(folder, 'activities_logs.csv'), index=False, sep = ';')
+  activities_df.to_csv(os.path.join(folder, 'prices_round_1_day_1.csv'), index=False, sep = ';')
   
   
   print("\nTrade History logs:")
   trade_history_df = pd.DataFrame(parse_multiline_json(trade_history_logs))
   print(trade_history_df.head())
-  trade_history_df.to_csv(os.path.join(folder, 'trade_history_logs.csv'), index=False, sep = ';')
+  trade_history_df.to_csv(os.path.join(folder, 'trades_round_1_day_1_nn.csv'), index=False, sep = ';')
