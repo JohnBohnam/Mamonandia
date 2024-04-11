@@ -14,6 +14,7 @@ class Trader:
 		self.prev_ask_1 = []
 		self.prev_ask_volume_1 = []
 		self.prev_ask_volume_2 = []
+		self.hist_len=5
 
 #colls_taken = ['bid_price_1', 'bid_volume_1', 'ask_price_1', 'ask_volume_1', 'bid_volume_2', 'ask_volume_2']
 
@@ -28,10 +29,10 @@ class Trader:
 		bid_price_2=None
 
 		if od.buy_orders:
-			bid_price = min(od.buy_orders.keys())
+			bid_price = max(od.buy_orders.keys())
 			bid_vol_1=od.buy_orders[bid_price]
 			if(len(od.buy_orders.keys())>1):
-				bid_price_2=max(od.buy_orders.keys())
+				bid_price_2=min(od.buy_orders.keys())
 				bid_vol_2 = od.buy_orders[bid_price_2]
 			else:
 				bid_vol_2=0
@@ -43,13 +44,14 @@ class Trader:
 		# print("no bids, using prev")
 
 		if bid_price is not None:
-			self.prev_bids=self.prev_bid_1[1:]#drops first element
+			#if(len(self.prev_bid_1)=5):
 			self.prev_bids.append(bid_price)
-			self.prev_bid_volume_1 = self.prev_bid_volume_1[1:]  # drops first element
+			self.prev_bids = self.prev_bid_1[-self.hist_len:]
+			#self.prev_bid_volume_1 = self.prev_bid_volume_1[1:]  # drops first element
 			self.prev_bid_volume_1.append(bid_vol_1)
-			self.prev_bid_volume_2 = self.prev_bid_volume_2[1:]  # drops first element
+			self.prev_bid_volume_1 = self.prev_bid_volume_1[-self.hist_len:]  # drops first element
 			self.prev_bid_volume_2.append(bid_vol_2)
-
+			self.prev_bid_volume_2 = self.prev_bid_volume_2[-self.hist_len:]  # drops first element
 
 
 
@@ -70,12 +72,13 @@ class Trader:
 		# print("no bids, using prev")
 
 		if ask_price is not None:
-			self.prev_ask_1=self.prev_ask_1[1:]#drops first element
+
 			self.prev_ask_1.append(ask_price)
-			self.prev_ask_volume_1 = self.prev_ask_volume_1[1:]  # drops first element
+			self.prev_ask_1 = self.prev_ask_1[-self.hist_len:]  # drops first element
 			self.prev_ask_volume_1.append(ask_vol_1)
-			self.prev_ask_volume_2 = self.prev_ask_volume_2[1:]  # drops first element
+			self.prev_ask_volume_1 = self.prev_ask_volume_1[-self.hist_len:]  # drops first element
 			self.prev_ask_volume_2.append(bid_vol_2)
+			self.prev_ask_volume_2 = self.prev_ask_volume_2[-self.hist_len:]  # drops first element
 
 
 	def run(self, state: TradingState):
