@@ -17,5 +17,5 @@ plot_df = prices.merge(trades.loc[:,["timestamp", "price"]], on = "timestamp", h
 plot_df.loc[:,["bid_price_1", "ask_price_1", "price"]].plot(style = {"price":"x"})
 my_trades_ts = set(trades[(trades["buyer"] == "SUBMISSION") | (trades["seller"] == "SUBMISSION")]["timestamp"])
 # not my trades
-other_ts = trades[(trades["buyer"] != "SUBMISSION") & (trades["seller"] != "SUBMISSION")]["timestamp"].values
+other_ts = trades[(trades["buyer"] != "SUBMISSION") & (trades["seller"] != "SUBMISSION")]["timestamp"].shape
 trades[trades["timestamp"].isin(other_ts)]
