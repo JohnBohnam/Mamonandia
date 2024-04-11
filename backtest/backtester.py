@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..")
-
-from traders.stupidon import Trader
+from traders.amethyst_MM import Trader
+# from traders.stupidon import Trader
 # from bot_with_exercised_trades import Trader
 from backtester_logic import simulate_alternative
 
@@ -9,7 +9,7 @@ import time
 
 # Adjust accordingly the round and day to your needs
 if __name__ == "__main__":
-    curr_trader = Trader(verbose=False)
+    curr_trader = Trader()
     max_time = 9  # int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
     if max_time < 10:
         max_time *= 100000
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     #     print(f"Running simulation on round {round_} day {day} for time {max_time}")
     #     profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
     #     print(f"profits: {profits}")
-    day = 0
+    day = 1
     max_time = 999000-100
     print(f"Running simulation on round {round_} day {day} for time {max_time}")
     profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=True, logging=False)

@@ -21,11 +21,29 @@ prices = {day:read_data(prices_path[day], "product") for day in days}
 trades = {day:read_data(trades_path[day], "symbol") for day in days}
 day = -1
 prices[day]["mid_price_rolling_median"] = prices[day]["mid_price"].rolling(6).median()
-plot_df = prices[day].merge(trades[day].loc[:,["timestamp", "price"]], on = "timestamp", how = "left").set_index("timestamp")
+plot_df = prices[day]#.merge(trades[day].loc[:,["timestamp", "price"]], on = "timestamp", how = "left").set_index("timestamp")
 
+#max bid
+best_bid = prices[day]["bid_price_1"].values
+max_bids = [0] * len(best_bid)
+transaction_len = 20
+for i in range(len(best_bid)):
+	lower_i = max(0, i-transaction_len)
+	upper_i = min(len(best_bid), i+transaction_len)
+	max_bids[i] = np.max(best_bid[lower_i:upper_i])
 
+# min ask
+best_ask = prices[day]["ask_price_1"].values
+min_asks = [0] * len(best_ask)
+for i in range(len(best_ask)):
+	lower_i = max(0, i-50)
+	upper_i = min(len(best_ask), i+50)
+	min_asks[i] = np.min(best_ask[lower_i:upper_i])
+	
+plot_df["max_bid"] = max_bids
+plot_df["min_ask"] = min_asks
 
-plot_df.plot(y = ["price", "bid_price_1", "ask_price_1", "mid_price_rolling_median"], style = {"price":"x", "mid_price_rolling_median":"o"})
+plot_df.plot(y = ["bid_price_1", "ask_price_1", "min_ask", "max_bid"], style = {"min_ask":"x", "max_bid":"x"})
 
 
 for day in days:
