@@ -1,6 +1,7 @@
 from typing import List, Dict
-
+import numpy as np
 from research.datamodel import OrderDepth, TradingState, Order, Time
+# from datamodel import OrderDepth, TradingState, Order, Time
 
 
 def get_traded_volume(buy_orders: Dict[int, int], sell_orders: Dict[int, int], price):
@@ -38,6 +39,8 @@ def get_fit_price(buy_orders: Dict[int, int], sell_orders: Dict[int, int]):
         elif curr_size == best_size and curr_diff == best_diff:
             best_fit_price = (best_fit_price * count + price) / (count + 1)
             count += 1
+    if best_fit_price:
+        best_fit_price = np.round(best_fit_price)
     return best_fit_price
 
 
@@ -63,7 +66,16 @@ class Trader:
             self.limit_hits_up[product] = 0
             self.limit_hits_down[product] = 0
             self.limits[product] = 20
-
+    
+    def calculate_buy_quantity(self, order_depth, target_price):
+        asks = order_depth.sell_orders
+        q = sum([-y for x, y in asks.items() if x <= target_price])
+        return q
+    
+    def calculate_sell_quantity(self, order_depth, target_price):
+        bids = order_depth.buy_orders
+        q = sum([-y for x, y in bids.items() if x >= target_price])
+        return q
     def merge_dicts(self, list_of_dicts):
         merged_dict = {}
         for d in list_of_dicts:
@@ -83,6 +95,7 @@ class Trader:
         # print(f"limits up: {self.limit_hits_up}, limits down: {self.limit_hits_down}\n")
         # print(f"runs: {self.runs}\n")
         position = state.position
+        print(f"timestamp: {state.timestamp}, position: {position}")
         self.history_stairfruit.append((state.timestamp, state.order_depths["STARFRUIT"]))
         self.history_stairfruit = self.history_stairfruit[-self.time_window:]
 
@@ -97,19 +110,25 @@ class Trader:
         buy_orders, sell_orders = self.get_historical_trades_for_stairfruit()
         fit_price = get_fit_price(buy_orders, sell_orders)
         pos = state.position["STARFRUIT"] if "STARFRUIT" in state.position else 0
-        if int(state.timestamp)==738300:
-            print("backtest_point")
         if fit_price:
             sell_for = int(fit_price + self.sell_margin)
-            result["STARFRUIT"].append(Order("STARFRUIT", sell_for, -20 - pos))
+            q = self.calculate_sell_quantity(state.order_depths["STARFRUIT"], sell_for)
+            q = max(q, -20 - pos)
+            if q!=0:
+                result["STARFRUIT"].append(Order("STARFRUIT", sell_for, q))
             if self.verbose:
                 print("time", state.timestamp)
-                print(f"pos: {pos}, selling {-20 - pos} of STARFRUIT for {sell_for}")
+                print(f"pos: {pos}, selling {q} of STARFRUIT for {sell_for}")
 
             buy_for = int(fit_price - self.buy_margin)
-            result["STARFRUIT"].append(Order("STARFRUIT", buy_for, 20 - pos))
+            q = self.calculate_buy_quantity(state.order_depths["STARFRUIT"], buy_for)
+            q = min(q, 20 - pos)
+            if q!=0:
+                result["STARFRUIT"].append(Order("STARFRUIT", buy_for, q))
             if self.verbose:
                 print("time", state.timestamp)
-                print(f"pos: {pos}, buying {20 - pos} of STARFRUIT for {buy_for}")
+                print(f"pos: {pos}, buying {q} of STARFRUIT for {buy_for}")
+            if result["STARFRUIT"]:
+                print(f"orders for STARFRUIT: {result['STARFRUIT']}")
 
         return result, 0, ""
