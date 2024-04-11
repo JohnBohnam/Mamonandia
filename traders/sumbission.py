@@ -29,6 +29,9 @@ class Trader:
         self.prev_asks = []
         self.prev_mids = []
 
+        self.target_price = 10000
+        self.half_spread = 2
+
         self.spread = 5
         self.single_position_limit = 5
 
@@ -144,6 +147,57 @@ class Trader:
                 orders.append(Order("STARFRUIT", buy_for, q))
 
         return orders
+    #
+    # def order_amethysts(self, state: TradingState) -> list[Order]:
+    #     orders = []
+    #     product = "AMETHYSTS"
+    #
+    #     order_depth = state.order_depths[product]
+    #     pos = state.position.get(product, 0)
+    #     limit_buy, limit_sell = 20 - pos, -20 - pos
+    #     # buy cheap items
+    #
+    #     q = calculate_buy_quantity(order_depth, self.target_price - 1)
+    #     q = min(q, limit_buy)
+    #     if q != 0:
+    #         limit_buy -= q
+    #         pos += q
+    #         orders.append(Order(product, self.target_price - 1, q))
+    #     #
+    #     # sell expensive items
+    #     q = calculate_sell_quantity(order_depth, self.target_price + 1)
+    #     q = max(q, -20 - pos)
+    #     if q != 0:
+    #         limit_sell -= q
+    #         pos += q
+    #         orders.append(Order(product, self.target_price + 1, q))
+    #     #
+    #
+    #     # make 0 position
+    #     if pos > 0:
+    #         q = calculate_sell_quantity(order_depth, self.target_price)
+    #         q = max(q, limit_sell)
+    #         if q != 0:
+    #             pos += q
+    #             limit_sell -= q
+    #             orders.append(Order(product, self.target_price, q))
+    #     elif pos < 0:
+    #         q = calculate_buy_quantity(order_depth, self.target_price)
+    #         q = min(q, limit_buy)
+    #         if q != 0:
+    #             pos += q
+    #             limit_buy -= q
+    #             orders.append(Order(product, self.target_price, q))
+    #
+    #     # send MM orders
+    #     buy_q = limit_buy
+    #     sell_q = limit_sell
+    #     if buy_q > 0:
+    #         orders.append(Order(product, self.target_price - 1 + buy_q // 40, buy_q))
+    #     if sell_q < 0:
+    #         orders.append(Order(product, self.target_price + 1 + sell_q // 40 + 1, sell_q))
+    #
+    #     return orders
 
     def order_amethysts(self, state: TradingState) -> list[Order]:
         orders = []
@@ -152,25 +206,21 @@ class Trader:
         order_depth = state.order_depths[product]
         pos = state.position.get(product, 0)
         limit_buy, limit_sell = 20 - pos, -20 - pos
-        # buy cheap items
 
-        q = calculate_buy_quantity(order_depth, self.target_price - 1)
+        q = calculate_buy_quantity(order_depth, self.target_price - self.half_spread)
         q = min(q, limit_buy)
         if q != 0:
             limit_buy -= q
             pos += q
-            orders.append(Order(product, self.target_price - 1, q))
-        #
-        # sell expensive items
-        q = calculate_sell_quantity(order_depth, self.target_price + 1)
+            orders.append(Order(product, self.target_price - self.half_spread, q))
+
+        q = calculate_sell_quantity(order_depth, self.target_price + self.half_spread)
         q = max(q, -20 - pos)
         if q != 0:
             limit_sell -= q
             pos += q
-            orders.append(Order(product, self.target_price + 1, q))
-        #
+            orders.append(Order(product, self.target_price + self.half_spread, q))
 
-        # make 0 position
         if pos > 0:
             q = calculate_sell_quantity(order_depth, self.target_price)
             q = max(q, limit_sell)
@@ -190,10 +240,9 @@ class Trader:
         buy_q = limit_buy
         sell_q = limit_sell
         if buy_q > 0:
-            orders.append(Order(product, self.target_price - 1 + buy_q // 40, buy_q))
+            orders.append(Order(product, self.target_price - self.half_spread + buy_q // 40, buy_q))
         if sell_q < 0:
-            orders.append(Order(product, self.target_price + 1 + sell_q // 40 + 1, sell_q))
-
+            orders.append(Order(product, self.target_price + self.half_spread + sell_q // 40 + 1, sell_q))
         return orders
 
     def run(self, state: TradingState):
