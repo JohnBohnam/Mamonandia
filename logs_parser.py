@@ -65,7 +65,9 @@ def split_log_categories(filename):
 if __name__ == '__main__':
   folder = 'backtest/logs/'
   output_folder = "logs_data/"
-  sandbox_logs, activities_logs, trade_history_logs = split_log_categories(os.path.join(folder, '5fc16feb-4d76-42d4-9529-d6224e92dbf0.log'))
+  
+  file_name = "ac12fd7d-d749-4e7e-b576-3f9736e4238d.log"
+  sandbox_logs, activities_logs, trade_history_logs = split_log_categories(os.path.join(folder, file_name))
   
   print("Sandbox logs head:")
   sandbox_logs_df = pd.DataFrame(parse_multiline_json(sandbox_logs))
