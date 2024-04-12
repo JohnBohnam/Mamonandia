@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from traders.ml_trader import *
 
 pd.set_option('display.max_columns', None)
 days = [-2, -1, 0]
@@ -20,14 +21,21 @@ def read_data(path, prod_name):
 prices = {day:read_data(prices_path[day], "product") for day in days}
 trades = {day:read_data(trades_path[day], "symbol") for day in days}
 day = -1
-prices[day]["mid_price_rolling_median"] = prices[day]["mid_price"].rolling(6).median()
-plot_df = prices[day].merge(trades[day].loc[:,["timestamp", "price"]], on = "timestamp", how = "left").set_index("timestamp")
+df = prices[day]
+n_prev = 5
 
 
+colls_taken = ['bid_price_1', 'bid_volume_1', 'ask_price_1', 'ask_volume_1', 'bid_volume_2', 'ask_volume_2']
+df = df.loc[:,colls_taken].fillna(0).values
+X = [df[(i-n_prev):i].reshape(-1) for i in range(n_prev, len(df))]
+X = np.array(X)
+buy_prob = bid_forward(X).reshape(-1)
+sell_prob = ask_forward(X).reshape(-1)
+plot_df = prices[day]
+start = np.array([0]*n_prev)
+plot_df["buy_prob"] = np.concatenate([start, buy_prob])
+plot_df["sell_prob"] = np.concatenate([start, sell_prob])
 
-plot_df.plot(y = ["price", "bid_price_1", "ask_price_1", "mid_price_rolling_median"], style = {"price":"x", "mid_price_rolling_median":"o"})
-
-
-for day in days:
-	bid_ask_spread = (prices[day]["ask_price_1"] - prices[day]["bid_price_1"])
-	print(f"Day {day} bid ask spread: {bid_ask_spread.median()}")
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+plot_df.loc[:,["bid_price_1", "ask_price_1"]].plot(ax = ax1)
+plot_df.loc[:,["buy_prob", "sell_prob"]].plot(style = {"buy_prob":"x", "sell_prob":"x"}, ax = ax2)

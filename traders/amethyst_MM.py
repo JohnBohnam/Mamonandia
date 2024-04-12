@@ -66,9 +66,13 @@ class Trader:
 		buy_q = limit_buy
 		sell_q = limit_sell
 		if buy_q>0:
-			orders.append(Order(product, self.target_price-1 + buy_q//40, buy_q))
+			best_bid = max(order_depth.buy_orders.keys())
+			buy_price = min(self.target_price-2, best_bid+1)
+			orders.append(Order(product,buy_price + buy_q//40, buy_q))
 		if sell_q<0:
-			orders.append(Order(product, self.target_price+1 + sell_q//40+1, sell_q))
+			best_ask = min(order_depth.sell_orders.keys())
+			sell_price = max(self.target_price+2, best_ask-1)
+			orders.append(Order(product, sell_price + sell_q//40+1, sell_q))
 	
 	# String value holding Trader state data required.
 	# It will be delivered as TradingState.traderData on next execution.
