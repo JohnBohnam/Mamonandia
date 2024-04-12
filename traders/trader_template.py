@@ -23,17 +23,22 @@ class Trader:
         self.runs = 0
 
         self.verbose = verbose
-        self.products = ["STARFRUIT", "AMETHYSTS"]
+        self.products = ["STARFRUIT", "AMETHYSTS", "ORCHIDS"]
 
         for product in self.products:
             self.limit_hits_up[product] = 0
             self.limit_hits_down[product] = 0
             self.limits[product] = 20
 
+        self.limits["ORCHIDS"] = 100
+
     def run(self, state: TradingState):
-        result = {}
+        result = {"ORCHIDS": self.order_orchid(state),
+                  "STARFRUIT": self.order_starfruit(state),
+                  "AMEHTYSTS": self.order_amethysts(state),}
         self.run_routine(state)
 
+        # conversions here (2nd tuple element)
         return result, 0, ""
 
     def run_routine(self, state: TradingState):
@@ -46,6 +51,16 @@ class Trader:
             print(f"Limit hits down: {self.limit_hits_down}")
 
     def order_amethysts(self, state: TradingState):
+        orders = []
+        # ...
+        return orders
+
+    def order_starfruit(self, state: TradingState):
+        orders = []
+        # ...
+        return orders
+
+    def order_orchid(self, state: TradingState):
         orders = []
         # ...
         return orders
