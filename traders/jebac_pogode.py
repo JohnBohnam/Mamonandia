@@ -84,7 +84,7 @@ class Trader:
 		best_ask = min(state.order_depths[product].sell_orders.keys())
 		best_ask_vol = state.order_depths[product].sell_orders[best_ask]
 		ask_price = int(south_ask+1)
-		small_q = max(available_q, best_ask_vol)
+		small_q = available_q
 		big_q = available_q - small_q
 		if small_q<0:
 			orders.append(Order(product, ask_price, small_q))
