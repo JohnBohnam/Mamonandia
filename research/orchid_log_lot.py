@@ -14,11 +14,13 @@ plot_df = pd.DataFrame(dicts).set_index("time")
 plot_df["importTariff"] = plot_df["importTariff"]*(-1)
 plot_df["bidPrice"] = plot_df["bidPrice"] - plot_df["transportFees"] - plot_df["exportTariff"]
 plot_df["askPrice"] = plot_df["askPrice"] + plot_df["transportFees"] - plot_df["importTariff"]
+plot_df["importTariff"] = plot_df["importTariff"] - plot_df["transportFees"]
+plot_df["arbitrage"] = plot_df["best_bid"] - plot_df["askPrice"]
 # plot_df.columns ['best_bid', 'best_ask', 'bidPrice', 'askPrice', 'transportFees',
 #        'exportTariff', 'importTariff', 'sunlight', 'humidity'],
 n_plots = 4
 selected_cols1 = ['best_bid', 'best_ask', 'bidPrice', 'askPrice']
-selected_cols2 = ["transportFees", "exportTariff", "importTariff"]
+selected_cols2 = ["arbitrage"]
 selected_cols3 = ["sunlight"]
 selected_cols4 = ["humidity"]
 selected_cols_list = [selected_cols1, selected_cols2, selected_cols3, selected_cols4]
@@ -44,11 +46,11 @@ for day in days:
 	
 day = 1
 plot_df = data[day].set_index("timestamp")
-plot_df["IMPORT_TARIFF"] = plot_df["IMPORT_TARIFF"]*(-1)
+plot_df["IMPORT_TARIFF"] = plot_df["IMPORT_TARIFF"]*(-1) - plot_df["TRANSPORT_FEES"]
 # columns 'timestamp', 'ORCHIDS', 'TRANSPORT_FEES', 'EXPORT_TARIFF',
 #        'IMPORT_TARIFF', 'SUNLIGHT', 'HUMIDITY', 'DAY'
 selected_cols1 = ['ORCHIDS']
-selected_cols2 = ["TRANSPORT_FEES", "EXPORT_TARIFF", "IMPORT_TARIFF"]
+selected_cols2 = ["IMPORT_TARIFF"]
 selected_cols3 = ["SUNLIGHT"]
 selected_cols4 = ["HUMIDITY"]
 selected_cols_list = [selected_cols1, selected_cols2, selected_cols3, selected_cols4]
