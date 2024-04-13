@@ -31,19 +31,23 @@ class Trader:
             self.limits[product] = 20
 
         self.limits["ORCHIDS"] = 100
+        self.selected_keys = ["askPrice", "importTariff", "transportFees"]
 
     def run(self, state: TradingState):
         best_bid = max(state.order_depths["ORCHIDS"].buy_orders.keys())
         best_ask = min(state.order_depths["ORCHIDS"].sell_orders.keys())
         #
-        info_dict = {"time": state.timestamp, "best_bid": best_bid, "best_ask": best_ask,
+        self.info_dict = {"time": state.timestamp, "best_bid": best_bid, "best_ask": best_ask,
                      "position": state.position.get("ORCHIDS", 0), }
-        # print(f"{info_dict | state.observations.conversionObservations['ORCHIDS'].__dict__}")
+        observation = state.observations.conversionObservations["ORCHIDS"].__dict__
+        observation = {k: observation[k] for k in self.selected_keys}
+        self.info_dict.update(observation)
+        
         result = {"ORCHIDS": self.order_orchid(state),
                   "STARFRUIT": self.order_starfruit(state),
                   "AMEHTYSTS": self.order_amethysts(state), }
-        self.run_routine(state)
-
+        # self.run_routine(state)
+        print(f"{self.info_dict}")
         # conversions here (2nd tuple element)
         pos = state.position.get("ORCHIDS", 0)
         south_q = max(0, -pos)
@@ -73,23 +77,23 @@ class Trader:
         pos = state.position.get(product, 0)
         observation = state.observations.conversionObservations[product]
 
-        south_ask = int(observation.askPrice + observation.importTariff + observation.transportFees) + 1
+        min_profitable_bid = int(observation.askPrice + observation.importTariff + observation.transportFees) + 1
         #sell orders
-        q = calculate_sell_quantity(state.order_depths[product], south_ask)
+        q = calculate_sell_quantity(state.order_depths[product], min_profitable_bid)
         q = max(q, -self.limits[product] - pos)
-        orders = [Order(product, south_ask, q)]
+        if q!=0:
+            orders = [Order(product, min_profitable_bid, q)]
+        else:
+            orders = []
 
         # market making
+        south_ask =observation.askPrice + observation.importTariff + observation.transportFees
         available_q = -self.limits[product] - pos - q
-        best_ask = min(state.order_depths[product].sell_orders.keys())
-        best_ask_vol = state.order_depths[product].sell_orders[best_ask]
-        ask_price = int(south_ask + 1)
-        small_q = max(available_q, best_ask_vol)
-        big_q = available_q - small_q
-        if small_q < 0:
-            orders.append(Order(product, ask_price, small_q))
-        if big_q < 0:
-            orders.append(Order(product, ask_price + 1, big_q))
+        ask_price = int(south_ask + 2)
+        q = available_q//2
+        if q < 0:
+            orders.append(Order(product, ask_price, q))
+            orders.append(Order(product, ask_price + 1, available_q-q))
         return orders
 
     def update_limit_hits(self, state: TradingState):
