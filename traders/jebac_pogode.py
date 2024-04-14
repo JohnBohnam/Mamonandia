@@ -82,18 +82,20 @@ class Trader:
         q = calculate_sell_quantity(state.order_depths[product], min_profitable_bid)
         q = max(q, -self.limits[product] - pos)
         if q!=0:
+            self.info_dict["market take position"] = q
             orders = [Order(product, min_profitable_bid, q)]
         else:
             orders = []
 
         # market making
         south_ask =observation.askPrice + observation.importTariff + observation.transportFees
-        available_q = -self.limits[product] - pos - q
-        ask_price = int(south_ask + 2)
-        q = available_q//2
+        available_q = max(-self.limits[product] - pos - q, -self.limits[product]//2)
+        ask_price = int(south_ask + 3)
+        q = available_q
         if q < 0:
+            self.info_dict["market make position"] = q
+            # self.info_dict["MM_spread"] = ask_price - south_ask
             orders.append(Order(product, ask_price, q))
-            orders.append(Order(product, ask_price + 1, available_q-q))
         return orders
 
     def update_limit_hits(self, state: TradingState):
