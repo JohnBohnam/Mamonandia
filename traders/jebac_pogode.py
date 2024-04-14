@@ -89,13 +89,14 @@ class Trader:
 
         # market making
         south_ask =observation.askPrice + observation.importTariff + observation.transportFees
-        available_q = max(-self.limits[product] - pos - q, -self.limits[product]//2)
-        ask_price = int(south_ask + 3)
+        available_q = max(-self.limits[product] - pos - q, -self.limits[product])
+        ask_price = int(south_ask) + 2
         q = available_q
         if q < 0:
-            self.info_dict["market make position"] = q
+            # self.info_dict["market make position"] = q
             # self.info_dict["MM_spread"] = ask_price - south_ask
             orders.append(Order(product, ask_price, q))
+            # orders.append(Order(product, ask_price+1, available_q - q))
         return orders
 
     def update_limit_hits(self, state: TradingState):
