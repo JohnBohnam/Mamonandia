@@ -86,6 +86,7 @@ class Trader:
         # sell orders
         q = calculate_sell_quantity(state.order_depths[product], min_profitable_bid)
         q = max(q, -self.limits[product] - pos)
+        # q = max(-50, q)
         if q != 0:
             self.info_dict["market take position"] = q
             orders = [Order(product, min_profitable_bid, q)]
@@ -98,7 +99,7 @@ class Trader:
         available_q = max(-self.limits[product] - pos - q, -self.limits[product])
         # ask_price = best_bid + 2
         print(south_ask, best_bid)
-        ask_price = int(max(south_ask + 2, best_bid + 2))
+        ask_price = int(round((max(south_ask + 2, best_bid + 2))))
         q = available_q
         if q < 0:
             # self.info_dict["market make position"] = q
