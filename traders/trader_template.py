@@ -32,6 +32,8 @@ class Trader:
 
         self.limits["ORCHIDS"] = 100
 
+        print("Trader initialized with params: ", self.__dict__)
+
     def run(self, state: TradingState):
         result = {"ORCHIDS": self.order_orchid(state),
                   "STARFRUIT": self.order_starfruit(state),
