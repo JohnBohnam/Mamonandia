@@ -76,26 +76,39 @@ else:
     current_limits = {
         'AMETHYSTS': 20,
         'STARFRUIT': 20,
+        'ORCHIDS': 100,
+        'ROSES': 60,
+        'GIFT_BASKET': 60,
+        'CHOCOLATE': 250,
+        'STRAWBERRIES': 350,
     }
 
     ALL_SYMBOLS = [
         'AMETHYSTS',
         'STARFRUIT',
+        'ORCHIDS',
     ]
     POSITIONABLE_SYMBOLS = [
         'AMETHYSTS',
         'STARFRUIT',
+        'ORCHIDS',
     ]
     first_round = ['AMETHYSTS', 'STARFRUIT']
+    snd_round = first_round + ['ORCHIDS']
 
     SYMBOLS_BY_ROUND = {
         0: first_round,
         1: first_round,
+        2: snd_round,
     }
 
     first_round_pst = ['AMETHYSTS', 'STARFRUIT']
+    snd_round_pst = first_round_pst + ['ORCHIDS']
+    third_round_pst = ['ROSES', 'STRAWBERRIES', 'GIFT_BASKET', 'CHOCOLATE']
 
     SYMBOLS_BY_ROUND_POSITIONABLE = {
         0: first_round_pst,
         1: first_round_pst,
+        2: snd_round_pst,
+        3: third_round_pst,
     }

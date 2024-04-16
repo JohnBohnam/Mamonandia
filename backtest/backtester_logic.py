@@ -131,10 +131,14 @@ def simulate_alternative(
         trades_path = os.path.join(TRAINING_DATA_PREFIX, f'trades_round_{round_}_day_{day}_wn.csv')
         if not names:
             trades_path = os.path.join(TRAINING_DATA_PREFIX, f'trades_round_{round_}_day_{day}_nn.csv')
-        df_trades = pd.read_csv(trades_path, sep=';', dtype={'seller': str, 'buyer': str})
+
+        # check if the file exists
+        if os.path.exists(trades_path):
+            df_trades = pd.read_csv(trades_path, sep=';', dtype={'seller': str, 'buyer': str})
 
     states = process_prices(df_prices, round_, time_limit)
-    states = process_trades(df_trades, states, time_limit, names)
+    if df_trades is not None:
+        states = process_trades(df_trades, states, time_limit, names)
     ref_symbols = list(states[0].position.keys())
     max_time = max(list(states.keys()))
 
@@ -310,9 +314,12 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
 
                     max_volume_pos = -current_limits[symbol] - pos
                     final_volume = max(final_volume, max_volume_pos)
-                    pos += final_volume
+
+                    if final_volume == 0:
+                        break
 
                     trades.append(Trade(symbol, match[0], final_volume, "BOT", "YOU", time))
+                    pos += final_volume
                     # print(f"    trade: {final_volume} for {match[0]}, position: {pos}")
                     order_cp.quantity -= final_volume
                     symbol_order_depth.buy_orders[match[0]] += final_volume
@@ -334,6 +341,10 @@ def clear_order_book(trader_orders: dict[str, List[Order]], order_depth: dict[st
 
                     max_volume_pos = current_limits[symbol] - pos
                     final_volume = min(final_volume, max_volume_pos)
+
+                    if final_volume == 0:
+                        break
+
                     trades.append(Trade(symbol, match[0], final_volume, "YOU", "BOT", time))
                     pos += final_volume
 
