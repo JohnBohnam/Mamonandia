@@ -199,7 +199,7 @@ class Trader:
         result = {
             "ORCHIDS": self.order_orchid(state),
             "STARFRUIT": self.order_starfruit(state),
-            "AMEHTYSTS": self.order_amethysts(state),
+            "AMETHYSTS": self.order_amethysts(state),
         }
 
         self.update_prevs("STARFRUIT", state)
