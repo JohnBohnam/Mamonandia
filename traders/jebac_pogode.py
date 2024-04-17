@@ -84,13 +84,20 @@ class Trader:
         if q!=0:
             self.info_dict["market take position"] = q
             orders = [Order(product, min_profitable_bid, q)]
+            market_take = True
         else:
             orders = []
+            market_take = False
 
         # market making
+        best_bid = max(state.order_depths[product].buy_orders.keys())
         south_ask =observation.askPrice + observation.importTariff + observation.transportFees
         available_q = max(-self.limits[product] - pos - q, -self.limits[product])
-        ask_price = int(south_ask) + 2
+        # if market_take and best_bid - south_ask > 1:
+        #     ask_price = int(south_ask) + 2
+        # else:
+        #     ask_price = best_bid + 2
+        ask_price = max(int(south_ask) + 2, best_bid + 2)
         q = available_q
         if q < 0:
             # self.info_dict["market make position"] = q
