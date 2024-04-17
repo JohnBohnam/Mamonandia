@@ -106,9 +106,9 @@ class Trader:
 			mid_price[p] = (best_sell[p] + best_buy[p]) / 2
 		
 		res_buy = mid_price['GIFT_BASKET'] - mid_price['ROSES'] - mid_price['CHOCOLATE'] * 4 - \
-		          mid_price['STRAWBERRIES'] * 6 - 380
+		          mid_price['STRAWBERRIES'] * 6 - 390
 		res_sell = mid_price['GIFT_BASKET'] - mid_price['ROSES'] - mid_price['CHOCOLATE'] * 4 - \
-		           mid_price['STRAWBERRIES'] * 6 - 380
+		           mid_price['STRAWBERRIES'] * 6 - 390
 		
 		trade_at = self.basket_std * 0.5
 		
@@ -118,6 +118,7 @@ class Trader:
 		pos = state.position.get(traded_product, 0)
 		lim = self.limits[traded_product]
 		
+		print(state.position)
 		if res_sell > trade_at:
 			vol = pos + lim
 			self.cont_buy_basket_unfill = 0  # no need to buy rn
