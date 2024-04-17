@@ -35,6 +35,8 @@ class Trader:
 		self.basket_std = 38
 		self.limits.update({"ROSES": 60, "CHOCOLATE": 250, "STRAWBERRIES": 350, "GIFT_BASKET": 60})
 		self.basket_half_spread = 5
+		self.cont_buy_basket_unfill = 0
+		self.cont_sell_basket_unfill = 0
 		# self.coefs = {"ROSES": 1, "CHOCOLATE": 4, "STRAWBERRIES": 5}
 		#
 
@@ -85,7 +87,7 @@ class Trader:
 				self.limit_hits_down[product] += 1
 		return self.limit_hits_up, self.limit_hits_down
 	
-	def compute_orders_basket(self, state):
+	def order_gift_basket(self, state):
 		
 		orders = []
 		prods = ['ROSES', 'CHOCOLATE', 'STRAWBERRIES', 'GIFT_BASKET']
