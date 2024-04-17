@@ -32,7 +32,7 @@ class Trader:
 
 		self.limits["ORCHIDS"] = 100
 		#round 3
-		self.basket_std = 38
+		self.basket_std = 76
 		self.limits.update({"ROSES": 60, "CHOCOLATE": 250, "STRAWBERRIES": 350, "GIFT_BASKET": 60})
 		self.basket_half_spread = 5
 		self.cont_buy_basket_unfill = 0
@@ -135,11 +135,11 @@ class Trader:
 				pb_neg -= vol
 			# uku_pos += vol
 		elif res_buy < -trade_at:
-			vol = pos - lim
+			vol = lim - pos
 			self.cont_sell_basket_unfill = 0  # no need to sell rn
 			assert (vol >= 0)
 			if vol > 0:
-				orders['GIFT_BASKET'].append(
+				orders.append(
 					Order('GIFT_BASKET', worst_sell['GIFT_BASKET'], vol))
 				self.cont_buy_basket_unfill += 2
 				pb_pos += vol
