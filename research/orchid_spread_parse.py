@@ -1,7 +1,7 @@
 import os.path
 
 import pandas as pd
-
+import matplotlib.pyplot as plt
 pd.set_option('display.max_columns', None)
 
 
@@ -70,22 +70,27 @@ folder = 'backtest/logs'
 output_folder = "logs_data/"
 
 checker = []
-
-# for spread in range(1, 5):
-spread = 1
-# file_name = f"orchid50_spread_{spread}.log"
-file_name = "orchid50_mm_spread.log"
-sandbox_logs, _, trade_history_logs = split_log_categories(	os.path.join(folder, file_name))
-
-sandbox_logs_df = pd.DataFrame(parse_multiline_json(sandbox_logs))
-str_dict = sandbox_logs_df["lambdaLog"].values
-#eval string into dict
-dicts = [eval(x.split("\n")[0]) for x in str_dict[:1000]]
-sandbox_logs_df = pd.DataFrame(dicts)
-trade_history_df = pd.DataFrame(parse_multiline_json(trade_history_logs))
-trade_history_df = trade_history_df[trade_history_df["symbol"] == "ORCHIDS"]
-good_timestamps = trade_history_df[trade_history_df["quantity"]>25]["timestamp"].values
-sandbox_logs_df.head()
-sandbox_logs_df["mm_happened"] = sandbox_logs_df["time"].apply(lambda x: x in good_timestamps)*1.0
-p = sandbox_logs_df["mm_happened"].mean()
-sandbox_logs_df.to_csv(os.path.join(output_folder, f'orchid50_mm_spread.csv'), index=False, sep = ',')
+result = {}
+for spread in range(1, 5):
+	
+	file_name = f"orchid50_spread_{spread}.log"
+	# file_name = "orchid50_mm_spread.log"
+	sandbox_logs, _, trade_history_logs = split_log_categories(	os.path.join(folder, file_name))
+	
+	sandbox_logs_df = pd.DataFrame(parse_multiline_json(sandbox_logs))
+	str_dict = sandbox_logs_df["lambdaLog"].values
+	#eval string into dict
+	dicts = [eval(x.split("\n")[0]) for x in str_dict[:1000]]
+	sandbox_logs_df = pd.DataFrame(dicts)
+	trade_history_df = pd.DataFrame(parse_multiline_json(trade_history_logs))
+	trade_history_df = trade_history_df[trade_history_df["symbol"] == "ORCHIDS"]
+	good_timestamps = trade_history_df[trade_history_df["quantity"]>25]["timestamp"].values
+	sandbox_logs_df.head()
+	sandbox_logs_df["mm_happened"] = sandbox_logs_df["time"].apply(lambda x: x in good_timestamps)*1.0
+	
+	s1 = sandbox_logs_df["mm_happened"].rolling(20).mean().values
+	result[spread] = s1
+	
+for y, label in result.items():
+	plt.plot(label, label = f"spread {y}")
+plt.legend()
