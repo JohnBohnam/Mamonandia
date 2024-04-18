@@ -67,22 +67,23 @@ class Trader:
         return self.get_orchid_price_2(south_ask, best_bid, margin)
 
     def update_orchid_trades(self, state: TradingState):
-        curr_spread = 0
-        if "ORCHIDS" in state.own_trades:
-            curr_trades = []
-            for trade in state.own_trades["ORCHIDS"]:
-                if trade.timestamp == state.timestamp-100:
-                    curr_trades.append(trade)
-            sells = [trade.price for trade in curr_trades if trade.seller == "SUBMISSION"]
+        if "ORCHIDS" not in state.own_trades:
+            return 0
+        curr_trades = []
+        for trade in state.own_trades["ORCHIDS"]:
+            if trade.timestamp == state.timestamp-100:
+                curr_trades.append(trade)
+        sells = [trade.price for trade in curr_trades if trade.seller == "SUBMISSION"]
 
-            if sells:
-                max_sell = max(sells)
-                curr_spread = max_sell - self.get_orchid_price_2(self.prev_south_ask, self.prev_best_bid, 0)
+        if sells:
+            max_sell = max(sells)
+            curr_spread = max_sell - self.get_orchid_price_2(self.prev_south_ask, self.prev_best_bid, 0)
+        else:
+            return 0
 
         self.orchid_spreads.append((state.timestamp, curr_spread))
 
-        if len(self.orchid_spreads) > self.orchid_window:
-            self.orchid_spreads.pop(0)
+        self.orchid_spreads = [(x, y) for x, y in self.orchid_spreads if state.timestamp - x < self.orchid_window*100]
         return curr_spread
 
     def update_prevs(self, product, state: TradingState):
@@ -265,7 +266,7 @@ class Trader:
             orders = []
 
         # market making
-        margin_values = list(range(1, 6))
+        margin_values = list(range(0, 5))
 
         south_ask = observation.askPrice + observation.importTariff + observation.transportFees
         available_q = max(-self.limits[product] - pos - q, -self.limits[product])
@@ -285,8 +286,7 @@ class Trader:
 
         available_q += len(margin_values)
 
-        # if len(self.orchid_spreads) < 0.1*self.orchid_window:
-        if len(self.orchid_spreads) == 0:
+        if len(self.orchid_spreads) < 0.1 * self.orchid_window:
             ask_price = int((south_ask + 1))
             orders.append(Order(product, ask_price, available_q))
             print("er 2")
@@ -308,7 +308,6 @@ class Trader:
         ask_price = self.get_orchid_price(state, best_margin)
         if available_q < 0:
             orders.append(Order(product, ask_price, available_q))
-
 
         return orders
 
