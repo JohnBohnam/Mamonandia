@@ -57,7 +57,7 @@ class Trader:
         print("Trader initialized with params: ", self.__dict__)
 
     def get_orchid_price_2(self, south_ask, best_bid, margin):
-        return int(round((max(south_ask, best_bid))) + margin)
+        return int(round((max(south_ask + 0.51, best_bid))) + margin)
 
     def get_orchid_price(self, state: TradingState, margin):
         product = "ORCHIDS"
@@ -81,7 +81,7 @@ class Trader:
         else:
             return 0
 
-        self.orchid_spreads.append((state.timestamp, curr_spread))
+        self.orchid_spreads.append((state.timestamp, int(curr_spread)))
 
         self.orchid_spreads = [(x, y) for x, y in self.orchid_spreads if state.timestamp - x < self.orchid_window*100]
         return curr_spread
@@ -297,6 +297,9 @@ class Trader:
         for margin in margin_values:
             prob = sum([1.0 for x in self.orchid_spreads if x[1] == margin]) / len(self.orchid_spreads)
             probs.append((margin, prob))
+
+        if sum([x[1] for x in probs]) < 0.5:
+            print("nisko ;-;", probs)
 
         def profit_for_margin(margin):
             return self.get_orchid_price(state, margin) - south_ask
