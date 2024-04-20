@@ -343,8 +343,6 @@ class Trader:
 		# print(state.position)
 		if res_sell > trade_at:
 			vol = pos + lim
-			self.cont_buy_basket_unfill = 0  # no need to buy rn
-			# assert (vol >= 0)
 			if vol > 0:
 				orders[traded_product].append(
 						Order(traded_product, worst_buy[traded_product], -vol))
@@ -356,32 +354,24 @@ class Trader:
 			if vol > 0:
 				orders[traded_product].append(
 						Order(traded_product, worst_sell[traded_product], vol))
-				self.cont_buy_basket_unfill += 2
 				pb_pos += vol
 		for traded_product in ["ROSES", "CHOCOLATE", "STRAWBERRIES"]:
-			pb_pos = state.position.get(traded_product, 0)
-			pb_neg = state.position.get(traded_product, 0)
 			pos = state.position.get(traded_product, 0)
 			lim = self.limits[traded_product]
 			spread = best_sell[traded_product] - best_buy[traded_product]
 			
 			if res_sell > trade_at and spread <= 1.0:
 				vol = pos + lim
-				self.cont_buy_basket_unfill = 0  # no need to buy rn
 				assert (vol >= 0)
 				if vol > 0:
 					orders[traded_product].append(
 							Order(traded_product, best_buy[traded_product], -vol))
-					pb_neg -= vol
-			# uku_pos += vol
 			elif res_buy < -trade_at and spread <= 1.0:
 				vol = lim - pos
 				assert (vol >= 0)
 				if vol > 0:
 					orders[traded_product].append(
 							Order(traded_product, best_sell[traded_product], vol))
-					self.cont_buy_basket_unfill += 2
-					pb_pos += vol
 		
 		return orders
 	
