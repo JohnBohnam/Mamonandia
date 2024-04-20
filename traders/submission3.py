@@ -240,7 +240,7 @@ class Trader:
         best_bid = max(state.order_depths[product].buy_orders.keys())
         south_ask = observation.askPrice + observation.importTariff + observation.transportFees
         available_q = max(-self.limits[product] - pos - q, -self.limits[product])
-        ask_price = int(round((max(south_ask + self.orchid_margin, best_bid + self.orchid_margin))))
+        ask_price = int(round((max(south_ask, best_bid) + self.orchid_margin)))
         q = available_q
         if q < 0:
             orders.append(Order(product, ask_price, q))

@@ -234,10 +234,10 @@ class Trader:
 		
 		result = {
 				"ORCHIDS": self.order_orchid(state),
-				# "STARFRUIT": self.order_starfruit(state),
-				# "AMETHYSTS": self.order_amethysts(state),
+				"STARFRUIT": self.order_starfruit(state),
+				"AMETHYSTS": self.order_amethysts(state),
 		}
-		# result.update(self.order_gift_basket(state))
+		result.update(self.order_gift_basket(state))
 		
 		self.update_prevs("STARFRUIT", state)
 		pos = state.position.get("ORCHIDS", 0)
