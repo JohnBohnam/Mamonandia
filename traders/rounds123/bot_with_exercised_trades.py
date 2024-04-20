@@ -1,6 +1,6 @@
 from typing import List, Dict
 import numpy as np
-from research.datamodel import OrderDepth, TradingState, Order, Time
+from datamodel import OrderDepth, TradingState, Order, Time
 # from datamodel import OrderDepth, TradingState, Order, Time
 
 

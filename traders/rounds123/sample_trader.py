@@ -1,4 +1,4 @@
-from research.datamodel import TradingState
+from datamodel import TradingState
 
 
 # - `STARFRUIT`: 20

@@ -1,4 +1,4 @@
-from research.datamodel import TradingState, Order
+from datamodel import TradingState, Order
 import numpy as np
 
 

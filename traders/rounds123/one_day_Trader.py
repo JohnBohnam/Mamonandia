@@ -1,8 +1,8 @@
 from typing import Dict, List
 
-from research.datamodel import OrderDepth, TradingState, Order
+from datamodel import OrderDepth, TradingState, Order
 
-from traders.dontlooseshells_algo import Logger
+from traders.rounds123.dontlooseshells_algo import Logger
 
 
 class Trader:

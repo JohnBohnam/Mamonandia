@@ -9,7 +9,7 @@ from consts import TRAINING_DATA_PREFIX
 import os
 import pandas as pd
 
-from traders.bot_with_exercised_trades import Trader
+from traders.rounds123.bot_with_exercised_trades import Trader
 
 max_time = 1  # int(input("Max timestamp (1-9)->(1-9)(00_000) or exact number): ") or 999000)
 if max_time < 10:

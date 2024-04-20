@@ -1,7 +1,7 @@
 from typing import Dict, List
 
-from traders.dontlooseshells_algo import Logger
-from research.datamodel import OrderDepth, TradingState, Order
+from traders.rounds123.dontlooseshells_algo import Logger
+from research.rounds123.datamodel import OrderDepth, TradingState, Order
 import collections
 from collections import defaultdict
 import copy

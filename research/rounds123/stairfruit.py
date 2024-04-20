@@ -1,8 +1,7 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from traders.ml_trader import *
+from traders.rounds123.ml_trader import *
 
 pd.set_option('display.max_columns', None)
 days = [-2, -1, 0]

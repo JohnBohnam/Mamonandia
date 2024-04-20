@@ -1,5 +1,5 @@
 import json
-from research.datamodel import Order, ProsperityEncoder, Symbol, TradingState, Trade
+from datamodel import Order, ProsperityEncoder, Symbol, TradingState, Trade
 from typing import Any
 
 class Logger:
