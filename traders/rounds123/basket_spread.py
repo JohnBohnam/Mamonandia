@@ -130,9 +130,9 @@ class Trader:
 			for product in prods:
 				q = (n_spreads + current_q) * self.basket_coefs[product] - state.position.get(product, 0)
 				if q > 0:
-					orders[product].append(Order(product, best_sell[product], q))
+					orders[product].append(Order(product, worst_sell[product], q))
 				else:
-					orders[product].append(Order(product, best_buy[product], q))
+					orders[product].append(Order(product, worst_buy[product], q))
 		
 		return orders
 	def get_available_combination(self, state, weights:dict[str, int], side:int):
