@@ -385,16 +385,6 @@ class Trader:
             best_ask = min(state.order_depths[product].sell_orders.keys())
             mids[product] = (best_bid + best_ask) / 2
 
-        # get mids diff
-        # diff = {}
-        # for product in ["COCONUT", "COCONUT_COUPON"]:
-        # 	if self.coconut_prev_mids[product] is None:
-        # 		self.coconut_prev_mids[product] = mids[product]
-        # 		return orders
-        # 	else:
-        # 		diff[product] = mids[product] - self.coconut_prev_mids[product]
-        # 		self.coconut_prev_mids[product] = mids[product]
-        # spread = self.coconut_multipliers["COCONUT"] * diff["COCONUT"] + self.coconut_multipliers["COCONUT_COUPON"] * diff["COCONUT_COUPON"]
         spread = mids["COCONUT_COUPON"] * self.coconut_multipliers["COCONUT_COUPON"] + mids["COCONUT"] * \
                  self.coconut_multipliers["COCONUT"]
         self.coconut_spread_history.append(spread)
@@ -406,8 +396,6 @@ class Trader:
         if abs(spread_value) > self.coconut_spread_limit:
             print(f"Spread value: {spread_value} for time {state.timestamp}")
 
-        if state.timestamp == 245000:
-            print(f"Spread value: {spread_value} for time {state.timestamp}")
         current_n_spreads = state.position.get("COCONUT_COUPON", 0) / self.coconut_multipliers["COCONUT_COUPON"]
         if spread_value > self.coconut_spread_limit:
             self.target_n_spreads = -self.limits["COCONUT_COUPON"] / self.coconut_multipliers["COCONUT_COUPON"]
