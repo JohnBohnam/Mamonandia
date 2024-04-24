@@ -47,7 +47,7 @@ class Trader:
 		self.products = ['GIFT_BASKET', 'ROSES', 'CHOCOLATE', 'STRAWBERRIES']
 		self.basket_coefs = {"GIFT_BASKET":1, 'ROSES': -1, 'CHOCOLATE': -4, 'STRAWBERRIES': -6}
 		self.basket_history = {"mid_spread":[], "mid_point":[]}
-		self.basket_history_len = 1000
+		self.basket_history_len = 40
 
 		for product in self.products:
 			self.limit_hits_up[product] = 0
@@ -89,13 +89,13 @@ class Trader:
 			mid_price[p] = (best_sell[p] + best_buy[p]) / 2
 		
 		#update history
-		spread_mid = mid_price['GIFT_BASKET']*self.basket_coefs['ROSES'] + mid_price['ROSES'] * self.basket_coefs['ROSES'] + mid_price['CHOCOLATE'] * self.basket_coefs['CHOCOLATE'] + mid_price['STRAWBERRIES'] * self.basket_coefs['STRAWBERRIES']
+		spread_mid = mid_price['GIFT_BASKET']*self.basket_coefs['GIFT_BASKET'] + mid_price['ROSES'] * self.basket_coefs['ROSES'] + mid_price['CHOCOLATE'] * self.basket_coefs['CHOCOLATE'] + mid_price['STRAWBERRIES'] * self.basket_coefs['STRAWBERRIES']
 		self.basket_history["mid_spread"].append(spread_mid)
 		self.basket_history["mid_spread"] = self.basket_history["mid_spread"][-self.basket_history_len:]
 		def time_regression(x):
 			time = np.linspace(0, len(x), len(x))
-			coef = np.linalg.lstsq(time.reshape(-1, 1), x - np.mean(x), rcond = None)[0]
-			return coef[0] * len(x)/2 + np.median(x)
+			coef = np.linalg.lstsq(time.reshape(-1, 1), x - np.mean(x), rcond = None)[0]*3
+			return coef[0] * len(x) + np.median(x)
 		mid_point = time_regression(self.basket_history["mid_spread"])
 		self.basket_history["mid_point"].append(mid_point)
 		self.basket_history["mid_point"] = self.basket_history["mid_point"][-self.basket_history_len:]
@@ -104,15 +104,18 @@ class Trader:
 			return orders
 		#
 		# fee = np.std(np.array(self.basket_history["mid_spread"]) - np.array(self.basket_history["mid_point"])) * self.basket_std_mult
-		fee = 100
+		fee = 50
+		if state.timestamp==90000:
+			print("break")
 		if spread_mid > mid_point + fee:
 			target_q = -self.limits['GIFT_BASKET']
 		elif spread_mid < mid_point - fee:
 			target_q = self.limits['GIFT_BASKET']
-		elif (spread_mid - mid_point)*state.position.get('GIFT_BASKET', 0) > 0:
-			target_q = 0
+		# elif (spread_mid - mid_point)*state.position.get('GIFT_BASKET', 0) > 0:
+		# 	target_q = 0
 		else:
 			return orders
+		
 		print(f"position: {state.position}")
 		current_q = state.position.get('GIFT_BASKET', 0)
 		n_spreads = self.get_available_combination(state, self.basket_coefs, np.sign(target_q-current_q))
