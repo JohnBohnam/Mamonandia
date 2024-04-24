@@ -238,6 +238,7 @@ class Trader:
 				"AMETHYSTS": self.order_amethysts(state),
 		}
 		# result.update(self.order_gift_basket(state))
+		print(f"orchids: {result['ORCHIDS']}")
 		
 		self.update_prevs("STARFRUIT", state)
 		pos = state.position.get("ORCHIDS", 0)
@@ -272,7 +273,7 @@ class Trader:
 		self.prev_south_ask = south_ask
 		best_bid = max(state.order_depths[product].buy_orders.keys())
 		self.prev_best_bid = best_bid
-		
+		print(f"Best bid: {best_bid} ,south ask: {south_ask}, diff: {best_bid - south_ask}")
 		if available_q < -len(margin_values):
 			for margin in margin_values:
 				small_q = -1
