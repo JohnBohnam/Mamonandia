@@ -41,13 +41,13 @@ class Trader:
 		self.buy_margin = buy_margin
 		self.sell_margin = sell_margin
 
-		self.basket_std_mult = 1.0
+		self.basket_std_mult = 2.0
 
 		self.verbose = verbose
 		self.products = ['GIFT_BASKET', 'ROSES', 'CHOCOLATE', 'STRAWBERRIES']
-		self.basket_coefs = {'ROSES': 1, 'CHOCOLATE': 4, 'STRAWBERRIES': 6}
+		self.basket_coefs = {"GIFT_BASKET":1, 'ROSES': -1, 'CHOCOLATE': -4, 'STRAWBERRIES': -6}
 		self.basket_history = {"mid_spread":[], "mid_point":[]}
-		self.basket_history_len = 50
+		self.basket_history_len = 1000
 
 		for product in self.products:
 			self.limit_hits_up[product] = 0
@@ -89,13 +89,13 @@ class Trader:
 			mid_price[p] = (best_sell[p] + best_buy[p]) / 2
 		
 		#update history
-		spread_mid = mid_price['GIFT_BASKET'] - mid_price['ROSES'] * self.basket_coefs['ROSES'] - mid_price['CHOCOLATE'] * self.basket_coefs['CHOCOLATE'] - mid_price['STRAWBERRIES'] * self.basket_coefs['STRAWBERRIES']
+		spread_mid = mid_price['GIFT_BASKET']*self.basket_coefs['ROSES'] + mid_price['ROSES'] * self.basket_coefs['ROSES'] + mid_price['CHOCOLATE'] * self.basket_coefs['CHOCOLATE'] + mid_price['STRAWBERRIES'] * self.basket_coefs['STRAWBERRIES']
 		self.basket_history["mid_spread"].append(spread_mid)
 		self.basket_history["mid_spread"] = self.basket_history["mid_spread"][-self.basket_history_len:]
 		def time_regression(x):
 			time = np.linspace(0, len(x), len(x))
 			coef = np.linalg.lstsq(time.reshape(-1, 1), x - np.mean(x), rcond = None)[0]
-			return coef[0] * len(x) + np.median(x)
+			return coef[0] * len(x)/2 + np.median(x)
 		mid_point = time_regression(self.basket_history["mid_spread"])
 		self.basket_history["mid_point"].append(mid_point)
 		self.basket_history["mid_point"] = self.basket_history["mid_point"][-self.basket_history_len:]
@@ -103,7 +103,8 @@ class Trader:
 		if len(self.basket_history["mid_point"]) < self.basket_history_len:
 			return orders
 		#
-		fee = np.std(np.array(self.basket_history["mid_spread"]) - np.array(self.basket_history["mid_point"])) * self.basket_std_mult
+		# fee = np.std(np.array(self.basket_history["mid_spread"]) - np.array(self.basket_history["mid_point"])) * self.basket_std_mult
+		fee = 100
 		if spread_mid > mid_point + fee:
 			target_q = -self.limits['GIFT_BASKET']
 		elif spread_mid < mid_point - fee:
@@ -112,21 +113,43 @@ class Trader:
 			target_q = 0
 		else:
 			return orders
-		print(f"Target q: {target_q}")
-		target_q = target_q*(-1)
-			
-		q = target_q - state.position.get('GIFT_BASKET', 0)
-		if q > 0:
-			available = calculate_buy_quantity(state.order_depths['GIFT_BASKET'], worst_sell['GIFT_BASKET'])
-			q = min(q, available)
-			orders['GIFT_BASKET'].append(Order('GIFT_BASKET', worst_sell['GIFT_BASKET'], q))
-		elif q < 0:
-			available = calculate_sell_quantity(state.order_depths['GIFT_BASKET'], worst_buy['GIFT_BASKET'])
-			q = max(q, available)
-			orders['GIFT_BASKET'].append(Order('GIFT_BASKET', worst_buy['GIFT_BASKET'], q))
+		print(f"position: {state.position}")
+		current_q = state.position.get('GIFT_BASKET', 0)
+		n_spreads = self.get_available_combination(state, self.basket_coefs, np.sign(target_q-current_q))
+		n_spreads = min(n_spreads, abs(target_q - current_q))
+		n_spreads = n_spreads * np.sign(target_q - current_q)
+		print(f"n_spreads: {n_spreads}, target_q: {target_q}, current_q: {current_q}")
+		if n_spreads > 0:
+			for product in prods:
+				q = (n_spreads + current_q) * self.basket_coefs[product] - state.position.get(product, 0)
+				if q > 0:
+					orders[product].append(Order(product, worst_sell[product], q))
+				else:
+					orders[product].append(Order(product, worst_buy[product], q))
+		elif n_spreads < 0:
+			for product in prods:
+				q = (n_spreads + current_q) * self.basket_coefs[product] - state.position.get(product, 0)
+				if q > 0:
+					orders[product].append(Order(product, best_sell[product], q))
+				else:
+					orders[product].append(Order(product, best_buy[product], q))
 		
 		return orders
-
+	def get_available_combination(self, state, weights:dict[str, int], side:int):
+		if side ==-1:
+			weights = {k: -v for k, v in weights.items()}
+		result = {}
+		for product, weight in weights.items():
+			if weight < 0:
+				available = abs(sum(state.order_depths[product].buy_orders.values()))
+				q = min(available, abs(-self.limits[product] - state.position.get(product, 0)))
+				result[product] = q//abs(weight)
+			else:
+				available = abs(sum(state.order_depths[product].sell_orders.values()))
+				q = min(available, abs(self.limits[product] - state.position.get(product, 0)))
+				result[product] = q//abs(weight)
+		return min(result.values())
+		
 	def update_limit_hits(self, state: TradingState):
 		for product in self.products:
 			if product in state.position and state.position[product] == self.limits[product]:
