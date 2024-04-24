@@ -81,6 +81,8 @@ else:
         'GIFT_BASKET': 60,
         'CHOCOLATE': 250,
         'STRAWBERRIES': 350,
+        'COCONUT': 300,
+        'COCONUT_COUPON': 600,
     }
 
     ALL_SYMBOLS = [
@@ -105,10 +107,12 @@ else:
     first_round_pst = ['AMETHYSTS', 'STARFRUIT']
     snd_round_pst = first_round_pst + ['ORCHIDS']
     third_round_pst = ['ROSES', 'STRAWBERRIES', 'GIFT_BASKET', 'CHOCOLATE']
+    forth_round_pst = ["COCONUT", "COCONUT_COUPON"]
 
     SYMBOLS_BY_ROUND_POSITIONABLE = {
         0: first_round_pst,
         1: first_round_pst,
         2: snd_round_pst,
         3: third_round_pst,
+        4: forth_round_pst,
     }

@@ -1,10 +1,7 @@
 import sys
 sys.path.append("..")
-# from traders.amethyst_MM import Trader
-# from traders.stupidon import Trader
-# from bot_with_exercised_trades import Trader
 from backtester_logic import simulate_alternative
-from traders.get_limits import Trader
+from traders.rounds123.basket_spread import Trader
 import time
 
 # Adjust accordingly the round and day to your needs
@@ -26,7 +23,7 @@ if __name__ == "__main__":
     #     profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=False, logging=False)
     #     print(f"profits: {profits}")
     day = 1
-    max_time = 10000
+    max_time = 999900
     print(f"Running simulation on round {round_} day {day} for time {max_time}")
     profits = simulate_alternative(round_, day, curr_trader, max_time, names, verbose=False, plotting=True, logging=False)
     print(f"profits: {profits}")

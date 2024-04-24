@@ -9,7 +9,7 @@ import os
 from consts import *
 
 # from Strategy2023.trader import Trader
-from traders.rounds123.stupidon import Trader
+from traders.diff_spread import Trader
 from backtester_logging import create_log_file
 
 
@@ -199,10 +199,7 @@ def trades_position_pnl_run(
     trader_orders = {}
     for time, state in states.items():
         position = copy.deepcopy(state.position)
-        if old:
-            orders = trader.run(state)
-        else:
-            orders, _, _ = trader.run(state)
+        orders, _, _ = trader.run(state)
         trader_orders[time] = orders
         trades = clear_order_book(orders, state.order_depths, time, position)
         mids = calc_mid(states, round_, time, max_time)

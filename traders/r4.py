@@ -24,6 +24,7 @@ class Trader:
 
         self.verbose = verbose
         self.products = ["STARFRUIT", "AMETHYSTS", "ORCHIDS", "COCONUT", "COCONUT_COUPON"]
+        self.coconut_window = 50
 
         for product in self.products:
             self.limit_hits_up[product] = 0
@@ -33,6 +34,8 @@ class Trader:
         self.limits["ORCHIDS"] = 100
         self.limits["COCONUT"] = 300
         self.limits["COCONUT_COUPON"] = 600
+        self.coconut_window = 50
+        self.coconut_spread_history = []
 
         print("Trader initialized with params: ", self.__dict__)
 

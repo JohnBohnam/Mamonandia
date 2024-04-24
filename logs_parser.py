@@ -66,7 +66,7 @@ if __name__ == '__main__':
   folder = 'backtest/logs/'
   output_folder = "logs_data/"
   
-  file_name = "cd516df5-5c85-47f9-851e-4073bdf8f436.log"
+  file_name = "round4_run_log.log"
   sandbox_logs, activities_logs, trade_history_logs = split_log_categories(os.path.join(folder, file_name))
   
   print("Sandbox logs head:")
